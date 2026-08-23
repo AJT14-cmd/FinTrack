@@ -15,6 +15,6 @@ public class FinTrackApplication {
 
     @GetMapping
     public String helloWorld() {
-        return "Vid TimeStamp : 43:12";
+        return "Hallo";
     }
 }

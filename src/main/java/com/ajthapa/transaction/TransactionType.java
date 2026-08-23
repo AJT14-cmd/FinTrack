@@ -1,4 +1,4 @@
-package com.ajthapa;
+package com.ajthapa.transaction;
 
 public enum TransactionType {
     INCOME,

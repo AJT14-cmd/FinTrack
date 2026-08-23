@@ -1,16 +1,21 @@
-package com.ajthapa;
+package com.ajthapa.transaction;
 
+import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+@Entity
+@Table(name="financial_transaction")
 public class Transaction {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long accountId;
     private String description;
     private BigDecimal amount;
     private TransactionType type;
-    private final LocalDateTime transactionDateTime;
+    private LocalDateTime transactionDateTime;
 
     public Transaction(Long id, Long accountId, String description, BigDecimal amount,
                        TransactionType type) {
@@ -20,6 +25,10 @@ public class Transaction {
         this.amount = amount;
         this.type = type;
         this.transactionDateTime = LocalDateTime.now();
+    }
+
+    protected Transaction() {
+
     }
 
     public Long getId() {

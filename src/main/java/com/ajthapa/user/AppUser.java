@@ -1,22 +1,31 @@
-package com.ajthapa;
+package com.ajthapa.user;
+
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-public class User {
+@Entity
+@Table(name = "app_user")
+public class AppUser {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private String email;
-    private final LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
-    public User(Long id, String name, String email) {
+    protected AppUser() {
+    }
+
+    public AppUser(Long id, String name, String email) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.createdAt = LocalDateTime.now();
     }
 
-    public long getId() {
+    public Long getId() {
         return this.id;
     }
 
@@ -47,7 +56,7 @@ public class User {
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
+        AppUser user = (AppUser) o;
         return Objects.equals(id, user.id) && Objects.equals(name, user.name) && Objects.equals(email, user.email)
                 && Objects.equals(createdAt, user.createdAt);
     }
