@@ -23,4 +23,30 @@ public class TransactionService {
                         transaction.getTransactionDateTime()
                 )).toList();
     }
+
+    public TransactionResponse getTransactionById(Long id) {
+        return transactionRepository.findById(id).map(
+                transaction -> new TransactionResponse(
+                        id,
+                        transaction.getAccountId(),
+                        transaction.getDescription(),
+                        transaction.getAmount(),
+                        transaction.getType(),
+                        transaction.getTransactionDateTime()
+                )).orElseThrow(() -> new IllegalStateException(id + "not found")
+        );
+    }
+
+    public void insertTransaction(CreateTransactionRequest createTransactionRequest) {
+
+        Transaction transaction = new Transaction(
+                null,
+                createTransactionRequest.accountId(),
+                createTransactionRequest.description(),
+                createTransactionRequest.amount(),
+                createTransactionRequest.type()
+        );
+
+        transactionRepository.save(transaction);
+    }
 }
