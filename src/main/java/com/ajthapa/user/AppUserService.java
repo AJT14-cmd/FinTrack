@@ -13,18 +13,10 @@ public class AppUserService {
     }
 
     public List<AppUserResponse> getAllUsers() {
-        return appUserRepository.findAll().stream().map(
-                user -> new AppUserResponse(
-                        user.getId(),
-                        user.getName(),
-                        user.getEmail(),
-                        user.getCreatedAt()
-                )
-        ).toList();
+        return appUserRepository.findAll().stream().map(this::mapResponse).toList();
     }
 
-    //needs to implement security, validation, etc.
-    public void insertAppUser(CreateAppUserRequest createAppUserRequest) {
+    public AppUserResponse insertAppUser(CreateAppUserRequest createAppUserRequest) {
         AppUser user = new AppUser(
                 null,
                 createAppUserRequest.name(),
@@ -32,14 +24,21 @@ public class AppUserService {
         );
 
         appUserRepository.save(user);
+
+        return mapResponse(user);
     }
 
     public AppUserResponse getUsersById(Long id) {
-        return appUserRepository.findById(id).map(user -> new AppUserResponse(
-                id,
-                user.getName(),
-                user.getEmail(),
-                user.getCreatedAt()
-        )).orElseThrow(() -> new IllegalArgumentException(id + "not found"));
+        return appUserRepository.findById(id).map(this::mapResponse).
+                orElseThrow(() -> new IllegalStateException(id + " not found"));
+    }
+
+    private AppUserResponse mapResponse(AppUser appUser) {
+        return new AppUserResponse(
+                appUser.getId(),
+                appUser.getName(),
+                appUser.getEmail(),
+                appUser.getCreatedAt()
+        );
     }
 }

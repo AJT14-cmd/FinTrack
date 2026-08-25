@@ -1,5 +1,6 @@
 package com.ajthapa.user;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,10 +24,9 @@ public class AppUserController {
         return appUserService.getUsersById(id);
     }
 
-    // change this, dont accept entities
     @PostMapping
-    public void addNewUsers(@RequestBody CreateAppUserRequest createAppUserRequest) {
-        appUserService.insertAppUser(createAppUserRequest);
+    public AppUserResponse addNewUsers(@Valid @RequestBody CreateAppUserRequest createAppUserRequest) {
+        return appUserService.insertAppUser(createAppUserRequest);
     }
 
 

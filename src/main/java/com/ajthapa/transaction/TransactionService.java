@@ -13,31 +13,15 @@ public class TransactionService {
     }
 
     public List<TransactionResponse> getAllTransactions() {
-        return transactionRepository.findAll().stream().map(
-                transaction -> new TransactionResponse(
-                        transaction.getId(),
-                        transaction.getAccountId(),
-                        transaction.getDescription(),
-                        transaction.getAmount(),
-                        transaction.getType(),
-                        transaction.getTransactionDateTime()
-                )).toList();
+        return transactionRepository.findAll().stream().map(this::mapResponse).toList();
     }
 
     public TransactionResponse getTransactionById(Long id) {
-        return transactionRepository.findById(id).map(
-                transaction -> new TransactionResponse(
-                        id,
-                        transaction.getAccountId(),
-                        transaction.getDescription(),
-                        transaction.getAmount(),
-                        transaction.getType(),
-                        transaction.getTransactionDateTime()
-                )).orElseThrow(() -> new IllegalStateException(id + "not found")
-        );
+        return transactionRepository.findById(id).map(this::mapResponse).orElseThrow(() ->
+                new IllegalStateException(id + " not found"));
     }
 
-    public void insertTransaction(CreateTransactionRequest createTransactionRequest) {
+    public TransactionResponse insertTransaction(CreateTransactionRequest createTransactionRequest) {
 
         Transaction transaction = new Transaction(
                 null,
@@ -47,6 +31,27 @@ public class TransactionService {
                 createTransactionRequest.type()
         );
 
-        transactionRepository.save(transaction);
+        Transaction savedTransaction = transactionRepository.save(transaction);
+
+        return mapResponse(savedTransaction);
+    }
+
+    public void deleteTransaction(Long id) {
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException(id + " not found"));
+
+        transactionRepository.delete(transaction);
+
+    }
+
+    private TransactionResponse mapResponse(Transaction transaction) {
+        return new TransactionResponse(
+                transaction.getId(),
+                transaction.getAccountId(),
+                transaction.getDescription(),
+                transaction.getAmount(),
+                transaction.getType(),
+                transaction.getTransactionDateTime()
+        );
     }
 }

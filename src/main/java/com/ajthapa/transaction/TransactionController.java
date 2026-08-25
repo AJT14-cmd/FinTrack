@@ -1,7 +1,7 @@
 package com.ajthapa.transaction;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -24,7 +24,12 @@ public class TransactionController {
     }
 
     @PostMapping
-    public void createTransaction(@RequestBody CreateTransactionRequest createTransactionRequest) {
-        transactionService.insertTransaction(createTransactionRequest);
+    public TransactionResponse createTransaction(@Valid @RequestBody CreateTransactionRequest createTransactionRequest) {
+        return transactionService.insertTransaction(createTransactionRequest);
+    }
+
+    @DeleteMapping("{id}")
+    public void deleteTransaction(@PathVariable Long id) {
+        transactionService.deleteTransaction(id);
     }
 }
