@@ -44,6 +44,20 @@ public class TransactionService {
 
     }
 
+    public TransactionResponse updateTransaction(Long id, UpdateTransactionRequest updateTranactionRequest) {
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException(id + "notfound"));
+
+        transaction.setAccountId(updateTranactionRequest.accountId());
+        transaction.setDescription(updateTranactionRequest.description());
+        transaction.setAmount(updateTranactionRequest.amount());
+        transaction.setType(updateTranactionRequest.type());
+
+        Transaction savedTransaction = transactionRepository.save(transaction);
+
+        return mapResponse(savedTransaction);
+    }
+
     private TransactionResponse mapResponse(Transaction transaction) {
         return new TransactionResponse(
                 transaction.getId(),

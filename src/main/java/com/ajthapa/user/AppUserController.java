@@ -1,6 +1,9 @@
 package com.ajthapa.user;
 
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,8 +28,9 @@ public class AppUserController {
     }
 
     @PostMapping
-    public AppUserResponse addNewUsers(@Valid @RequestBody CreateAppUserRequest createAppUserRequest) {
-        return appUserService.insertAppUser(createAppUserRequest);
+    public ResponseEntity<?> addNewUsers(@Valid @RequestBody CreateAppUserRequest createAppUserRequest) {
+        AppUserResponse appUserResponse =  appUserService.insertAppUser(createAppUserRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(appUserResponse);
     }
 
 

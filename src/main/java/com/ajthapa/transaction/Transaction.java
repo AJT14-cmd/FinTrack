@@ -14,6 +14,8 @@ public class Transaction {
     private Long accountId;
     private String description;
     private BigDecimal amount;
+
+    @Enumerated(EnumType.STRING)
     private TransactionType type;
     private LocalDateTime transactionDateTime;
 

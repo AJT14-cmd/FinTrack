@@ -1,6 +1,8 @@
 package com.ajthapa.transaction;
 
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -24,12 +26,23 @@ public class TransactionController {
     }
 
     @PostMapping
-    public TransactionResponse createTransaction(@Valid @RequestBody CreateTransactionRequest createTransactionRequest) {
-        return transactionService.insertTransaction(createTransactionRequest);
+    public ResponseEntity<?> createTransaction(@Valid @RequestBody CreateTransactionRequest createTransactionRequest) {
+        TransactionResponse transactionResponse = transactionService.insertTransaction(createTransactionRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(transactionResponse);
     }
 
     @DeleteMapping("{id}")
-    public void deleteTransaction(@PathVariable Long id) {
+    public ResponseEntity<?> deleteTransaction(@PathVariable Long id) {
         transactionService.deleteTransaction(id);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("{id}")
+    public ResponseEntity<?> updateTransaction(@PathVariable Long id,
+                                               @Valid @RequestBody UpdateTransactionRequest updateTransactionRequest) {
+        TransactionResponse transactionResponse = transactionService.updateTransaction(id, updateTransactionRequest);
+
+        return ResponseEntity.ok(transactionResponse);
     }
 }
