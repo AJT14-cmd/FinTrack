@@ -27,9 +27,9 @@ public class CategoryService {
                 createCategoryRequest.type()
         );
 
-        categoryRepository.save(category);
+        Category savedCategory = categoryRepository.save(category);
 
-        return mapResponse(category);
+        return mapResponse(savedCategory);
     }
 
     public void deleteCategory(Long id) {
@@ -46,9 +46,9 @@ public class CategoryService {
         category.setName(updateCategoryRequest.name());
         category.setType(updateCategoryRequest.type());
 
-        categoryRepository.save(category);
+        Category savedCategory = categoryRepository.save(category);
 
-        return mapResponse(category);
+        return mapResponse(savedCategory);
     }
 
     private CategoryResponse mapResponse(Category category) {

@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
 public record UpdateTransactionRequest(
+        @NotNull Long categoryId,
         @NotNull Long accountId,
         @NotBlank String description,
         @NotNull @Positive @Digits(integer = 12, fraction = 2) BigDecimal amount,

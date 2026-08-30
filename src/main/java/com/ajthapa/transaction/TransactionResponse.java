@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 
 public record TransactionResponse(
         Long id,
+        Long categoryId,
+        String categoryName,
         Long accountId,
         String description,
         BigDecimal amount,

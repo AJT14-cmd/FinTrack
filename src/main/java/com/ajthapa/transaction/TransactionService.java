@@ -2,14 +2,18 @@ package com.ajthapa.transaction;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import com.ajthapa.category.Category;
+import com.ajthapa.category.CategoryRepository;
 
 @Service
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
+    private final CategoryRepository categoryRepository;
 
-    public TransactionService(TransactionRepository transactionRepository) {
+    public TransactionService(TransactionRepository transactionRepository, CategoryRepository categoryRepository) {
         this.transactionRepository = transactionRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     public List<TransactionResponse> getAllTransactions() {
@@ -22,9 +26,12 @@ public class TransactionService {
     }
 
     public TransactionResponse insertTransaction(CreateTransactionRequest createTransactionRequest) {
+        Category category = categoryRepository.findById(createTransactionRequest.categoryId())
+                .orElseThrow(() -> new IllegalStateException("Category " + createTransactionRequest.categoryId() + " not found"));
 
         Transaction transaction = new Transaction(
                 null,
+                category,
                 createTransactionRequest.accountId(),
                 createTransactionRequest.description(),
                 createTransactionRequest.amount(),
@@ -44,14 +51,18 @@ public class TransactionService {
 
     }
 
-    public TransactionResponse updateTransaction(Long id, UpdateTransactionRequest updateTranactionRequest) {
-        Transaction transaction = transactionRepository.findById(id)
-                .orElseThrow(() -> new IllegalStateException(id + "notfound"));
+    public TransactionResponse updateTransaction(Long id, UpdateTransactionRequest updateTransactionRequest) {
+        Category category = categoryRepository.findById(updateTransactionRequest.categoryId())
+                .orElseThrow(() -> new IllegalStateException("Category " + updateTransactionRequest.categoryId() + " not found"));
 
-        transaction.setAccountId(updateTranactionRequest.accountId());
-        transaction.setDescription(updateTranactionRequest.description());
-        transaction.setAmount(updateTranactionRequest.amount());
-        transaction.setType(updateTranactionRequest.type());
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException(id + " not found"));
+
+        transaction.setCategory(category);
+        transaction.setAccountId(updateTransactionRequest.accountId());
+        transaction.setDescription(updateTransactionRequest.description());
+        transaction.setAmount(updateTransactionRequest.amount());
+        transaction.setType(updateTransactionRequest.type());
 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
@@ -61,6 +72,8 @@ public class TransactionService {
     private TransactionResponse mapResponse(Transaction transaction) {
         return new TransactionResponse(
                 transaction.getId(),
+                transaction.getCategory().getId(),
+                transaction.getCategory().getName(),
                 transaction.getAccountId(),
                 transaction.getDescription(),
                 transaction.getAmount(),

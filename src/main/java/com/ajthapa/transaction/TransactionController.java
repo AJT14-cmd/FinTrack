@@ -26,21 +26,21 @@ public class TransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createTransaction(@Valid @RequestBody CreateTransactionRequest createTransactionRequest) {
+    public ResponseEntity<TransactionResponse> createTransaction(@Valid @RequestBody CreateTransactionRequest createTransactionRequest) {
         TransactionResponse transactionResponse = transactionService.insertTransaction(createTransactionRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(transactionResponse);
     }
 
     @DeleteMapping("{id}")
-    public ResponseEntity<?> deleteTransaction(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteTransaction(@PathVariable Long id) {
         transactionService.deleteTransaction(id);
 
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<?> updateTransaction(@PathVariable Long id,
-                                               @Valid @RequestBody UpdateTransactionRequest updateTransactionRequest) {
+    public ResponseEntity<TransactionResponse> updateTransaction(@PathVariable Long id,
+                                                                 @Valid @RequestBody UpdateTransactionRequest updateTransactionRequest) {
         TransactionResponse transactionResponse = transactionService.updateTransaction(id, updateTransactionRequest);
 
         return ResponseEntity.ok(transactionResponse);
