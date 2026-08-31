@@ -2,6 +2,7 @@ package com.ajthapa.report;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -14,7 +15,7 @@ public class ReportController {
     }
 
     @GetMapping("monthly-summary")
-    public MonthlySummaryResponse getMonthlySummary() {
-        return reportService.getMonthlySummary();
+    public MonthlySummaryResponse getMonthlySummary(@RequestParam int year, @RequestParam int month) {
+        return reportService.getMonthlySummary(year, month);
     }
 }

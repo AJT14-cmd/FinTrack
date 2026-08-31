@@ -25,6 +25,6 @@ public class GlobalExceptionHandler {
                         error -> error.getField() + ": " + error.getDefaultMessage()
                 ).findFirst()
                 .orElse("Validation Failed");
-        return new ErrorResponse(exception.getMessage());
+        return new ErrorResponse(message);
     }
 }
