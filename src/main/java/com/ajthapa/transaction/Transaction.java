@@ -1,5 +1,6 @@
 package com.ajthapa.transaction;
 
+import com.ajthapa.account.Account;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,7 +16,9 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
-    private Long accountId;
+    @ManyToOne
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
     private String description;
     private BigDecimal amount;
 
@@ -23,11 +26,19 @@ public class Transaction {
     private TransactionType type;
     private LocalDateTime transactionDateTime;
 
-    public Transaction(Long id, Category category, Long accountId, String description, BigDecimal amount,
+    public Account getAccount() {
+        return account;
+    }
+
+    public void setAccount(Account account) {
+        this.account = account;
+    }
+
+    public Transaction(Long id, Category category, Account account, String description, BigDecimal amount,
                        TransactionType type) {
         this.id = id;
         this.category = category;
-        this.accountId = accountId;
+        this.account = account;
         this.description = description;
         this.amount = amount;
         this.type = type;
@@ -43,10 +54,6 @@ public class Transaction {
     }
 
     public Category getCategory() { return category; }
-
-    public Long getAccountId() {
-        return accountId;
-    }
 
     public String getDescription() {
         return description;
@@ -70,10 +77,6 @@ public class Transaction {
 
     public void setCategory(Category category) { this.category = category; }
 
-    public void setAccountId(Long accountId) {
-        this.accountId = accountId;
-    }
-
     public void setDescription(String description) {
         this.description = description;
     }
@@ -90,7 +93,7 @@ public class Transaction {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Transaction that = (Transaction) o;
-        return Objects.equals(id, that.id) && Objects.equals(accountId, that.accountId) &&
+        return Objects.equals(id, that.id) && Objects.equals(account, that.account) &&
                 Objects.equals(description, that.description) && Objects.equals(amount, that.amount)
                 && type == that.type && Objects.equals(transactionDateTime, that.transactionDateTime) &&
                 Objects.equals(category, that.category);
@@ -98,6 +101,6 @@ public class Transaction {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, category, accountId, description, amount, type, transactionDateTime);
+        return Objects.hash(id, category, account, description, amount, type, transactionDateTime);
     }
 }
