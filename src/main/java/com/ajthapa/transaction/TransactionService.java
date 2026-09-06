@@ -2,6 +2,7 @@ package com.ajthapa.transaction;
 import com.ajthapa.account.Account;
 import com.ajthapa.account.AccountRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import com.ajthapa.category.Category;
@@ -29,6 +30,7 @@ public class TransactionService {
                 new IllegalStateException(id + " not found"));
     }
 
+    @Transactional
     public TransactionResponse insertTransaction(CreateTransactionRequest createTransactionRequest) {
         Category category = categoryRepository.findById(createTransactionRequest.categoryId())
                 .orElseThrow(() -> new IllegalStateException("Category " + createTransactionRequest.categoryId() + " not found"));
@@ -58,6 +60,7 @@ public class TransactionService {
         return mapResponse(savedTransaction);
     }
 
+    @Transactional
     public void deleteTransaction(Long id) {
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException(id + " not found"));
@@ -76,21 +79,39 @@ public class TransactionService {
 
     }
 
+    @Transactional
     public TransactionResponse updateTransaction(Long id, UpdateTransactionRequest updateTransactionRequest) {
         Category category = categoryRepository.findById(updateTransactionRequest.categoryId())
                 .orElseThrow(() -> new IllegalStateException("Category " + updateTransactionRequest.categoryId() + " not found"));
 
-        Account account = accountRepository.findById(updateTransactionRequest.accountId())
+        Account newAccount = accountRepository.findById(updateTransactionRequest.accountId())
                 .orElseThrow(() -> new IllegalStateException("Account " + updateTransactionRequest.accountId() + " not found"));
 
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException(id + " not found"));
 
+        Account oldAccount = transaction.getAccount();
+
+        if (transaction.getType() == TransactionType.INCOME) {
+            oldAccount.setBalance(oldAccount.getBalance().subtract(transaction.getAmount()));
+        } else if (transaction.getType() == TransactionType.EXPENSE) {
+            oldAccount.setBalance(oldAccount.getBalance().add(transaction.getAmount()));
+        }
+
+        if (updateTransactionRequest.type() == TransactionType.INCOME) {
+            newAccount.setBalance(newAccount.getBalance().add(updateTransactionRequest.amount()));
+        } else if (updateTransactionRequest.type() == TransactionType.EXPENSE) {
+            newAccount.setBalance(newAccount.getBalance().subtract(updateTransactionRequest.amount()));
+        }
+
         transaction.setCategory(category);
-        transaction.setAccount(account);
+        transaction.setAccount(newAccount);
         transaction.setDescription(updateTransactionRequest.description());
         transaction.setAmount(updateTransactionRequest.amount());
         transaction.setType(updateTransactionRequest.type());
+
+        accountRepository.save(oldAccount);
+        accountRepository.save(newAccount);
 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
