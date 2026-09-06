@@ -62,6 +62,16 @@ public class TransactionService {
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException(id + " not found"));
 
+        Account account = transaction.getAccount();
+
+        if (transaction.getType() == TransactionType.INCOME) {
+            account.setBalance(account.getBalance().subtract(transaction.getAmount()));
+        } else if (transaction.getType() == TransactionType.EXPENSE) {
+            account.setBalance(account.getBalance().add(transaction.getAmount()));
+        }
+
+        accountRepository.save(account);
+
         transactionRepository.delete(transaction);
 
     }
