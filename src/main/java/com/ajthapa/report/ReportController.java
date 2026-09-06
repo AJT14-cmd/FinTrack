@@ -1,5 +1,6 @@
 package com.ajthapa.report;
 
+import com.ajthapa.account.AccountBalanceResponse;
 import com.ajthapa.budget.BudgetStatusResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,5 +29,10 @@ public class ReportController {
             @RequestParam int month
     ) {
         return reportService.getBudgetStatus(year, month);
+    }
+
+    @GetMapping("/account-balances")
+    public List<AccountBalanceResponse> getAccountBalances() {
+        return reportService.getAccountBalances();
     }
 }

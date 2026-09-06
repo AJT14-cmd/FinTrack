@@ -1,5 +1,6 @@
 package com.ajthapa.report;
 
+import com.ajthapa.account.AccountBalanceResponse;
 import com.ajthapa.budget.Budget;
 import com.ajthapa.budget.BudgetRepository;
 import com.ajthapa.budget.BudgetStatus;
@@ -9,6 +10,7 @@ import com.ajthapa.category.CategorySpendingResponse;
 import com.ajthapa.transaction.Transaction;
 import com.ajthapa.transaction.TransactionRepository;
 import com.ajthapa.transaction.TransactionType;
+import com.ajthapa.account.AccountRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,10 +24,12 @@ public class ReportService {
 
     private final TransactionRepository transactionRepository;
     private final BudgetRepository budgetRepository;
+    private final AccountRepository accountRepository;
 
-    public ReportService(TransactionRepository transactionRepository, BudgetRepository budgetRepository) {
+    public ReportService(TransactionRepository transactionRepository, BudgetRepository budgetRepository, AccountRepository accountRepository) {
         this.transactionRepository = transactionRepository;
         this.budgetRepository = budgetRepository;
+        this.accountRepository = accountRepository;
     }
 
     public MonthlySummaryResponse getMonthlySummary(int year, int month) {
@@ -119,5 +123,16 @@ public class ReportService {
                     );
                 })
                 .toList();
+    }
+
+    public List<AccountBalanceResponse> getAccountBalances() {
+        return accountRepository.findAll().stream().map(
+                account -> new AccountBalanceResponse(
+                        account.getId(),
+                        account.getName(),
+                        account.getType(),
+                        account.getBalance()
+                )
+        ).toList();
     }
 }
