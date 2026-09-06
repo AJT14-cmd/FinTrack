@@ -1,6 +1,7 @@
 package com.ajthapa.transaction;
 import com.ajthapa.account.Account;
 import com.ajthapa.account.AccountRepository;
+import com.ajthapa.user.AppUserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,11 +15,14 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final CategoryRepository categoryRepository;
     private final AccountRepository accountRepository;
+    private final AppUserRepository appUserRepository;
 
-    public TransactionService(TransactionRepository transactionRepository, CategoryRepository categoryRepository, AccountRepository accountRepository) {
+    public TransactionService(TransactionRepository transactionRepository, CategoryRepository categoryRepository,
+                              AccountRepository accountRepository, AppUserRepository appUserRepository) {
         this.transactionRepository = transactionRepository;
         this.categoryRepository = categoryRepository;
         this.accountRepository = accountRepository;
+        this.appUserRepository = appUserRepository;
     }
 
     public List<TransactionResponse> getAllTransactions() {
@@ -116,6 +120,16 @@ public class TransactionService {
         Transaction savedTransaction = transactionRepository.save(transaction);
 
         return mapResponse(savedTransaction);
+    }
+
+    public List<TransactionResponse> findByAppUserId(Long appUserId) {
+        if (!appUserRepository.existsById(appUserId)) {
+            throw new IllegalStateException("User " + appUserId + " not found");
+        }
+
+        return transactionRepository.findByAccountAppUserId(appUserId).stream()
+                .map(this::mapResponse)
+                .toList();
     }
 
     private TransactionResponse mapResponse(Transaction transaction) {

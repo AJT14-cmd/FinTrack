@@ -66,6 +66,15 @@ public class AccountService {
         return mapResponse(savedAccount);
     }
 
+    public List<AccountResponse> findByAppUserId(Long appUserId) {
+        if (!appUserRepository.existsById(appUserId)) {
+            throw new IllegalStateException("User " + appUserId + " not found");
+        }
+
+        return accountRepository.findByAppUserId(appUserId).stream()
+                .map(this::mapResponse).toList();
+    }
+
     private AccountResponse mapResponse(Account account) {
         return new AccountResponse(
                 account.getId(),

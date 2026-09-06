@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 
 public record UpdateBudgetRequest(
         @NotNull Long categoryId,
+        @NotNull Long appUserId,
         @NotBlank String month,
         @NotNull @Positive @Digits(integer = 12, fraction = 2) BigDecimal limitAmount
 ) {

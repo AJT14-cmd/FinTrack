@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface BudgetRepository extends JpaRepository<Budget, Long> {
     List<Budget> findByMonth(String month);
+    List<Budget> findByAppUserId(Long appUserId);
 }

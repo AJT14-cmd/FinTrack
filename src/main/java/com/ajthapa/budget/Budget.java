@@ -1,6 +1,7 @@
 package com.ajthapa.budget;
 
 import com.ajthapa.category.Category;
+import com.ajthapa.user.AppUser;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -14,12 +15,16 @@ public class Budget {
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+    @ManyToOne
+    @JoinColumn(name = "app_user_id", nullable = false)
+    private AppUser appUser;
     private String month;
     private BigDecimal limitAmount;
 
-    public Budget(Long id, Category category, String month, BigDecimal limitAmount) {
+    public Budget(Long id, Category category, AppUser appUser, String month, BigDecimal limitAmount) {
         this.id = id;
         this.category = category;
+        this.appUser = appUser;
         this.month = month;
         this.limitAmount = limitAmount;
     }
@@ -42,6 +47,14 @@ public class Budget {
 
     public void setCategory(Category category) {
         this.category = category;
+    }
+
+    public AppUser getAppUser() {
+        return appUser;
+    }
+
+    public void setAppUser(AppUser appUser) {
+        this.appUser = appUser;
     }
 
     public String getMonth() {
