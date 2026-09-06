@@ -19,20 +19,23 @@ public class ReportController {
     }
 
     @GetMapping("monthly-summary")
-    public MonthlySummaryResponse getMonthlySummary(@RequestParam int year, @RequestParam int month) {
-        return reportService.getMonthlySummary(year, month);
+    public MonthlySummaryResponse getMonthlySummary(@RequestParam int year,
+                                                    @RequestParam int month,
+                                                    @RequestParam Long userId) {
+        return reportService.getMonthlySummary(year, month, userId);
     }
 
     @GetMapping("budget-status")
     public List<BudgetStatusResponse> getBudgetStatus(
             @RequestParam int year,
-            @RequestParam int month
+            @RequestParam int month,
+            @RequestParam Long userId
     ) {
-        return reportService.getBudgetStatus(year, month);
+        return reportService.getBudgetStatus(year, month, userId);
     }
 
     @GetMapping("/account-balances")
-    public List<AccountBalanceResponse> getAccountBalances() {
-        return reportService.getAccountBalances();
+    public List<AccountBalanceResponse> getAccountBalances(@RequestParam Long userId) {
+        return reportService.getAccountBalances(userId);
     }
 }

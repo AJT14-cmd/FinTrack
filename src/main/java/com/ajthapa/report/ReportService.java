@@ -11,6 +11,7 @@ import com.ajthapa.transaction.Transaction;
 import com.ajthapa.transaction.TransactionRepository;
 import com.ajthapa.transaction.TransactionType;
 import com.ajthapa.account.AccountRepository;
+import com.ajthapa.user.AppUserRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -25,26 +26,44 @@ public class ReportService {
     private final TransactionRepository transactionRepository;
     private final BudgetRepository budgetRepository;
     private final AccountRepository accountRepository;
+    private final AppUserRepository appUserRepository;
 
-    public ReportService(TransactionRepository transactionRepository, BudgetRepository budgetRepository, AccountRepository accountRepository) {
+    public ReportService(TransactionRepository transactionRepository, BudgetRepository budgetRepository,
+                         AccountRepository accountRepository, AppUserRepository appUserRepository) {
         this.transactionRepository = transactionRepository;
         this.budgetRepository = budgetRepository;
         this.accountRepository = accountRepository;
+        this.appUserRepository = appUserRepository;
     }
 
-    public MonthlySummaryResponse getMonthlySummary(int year, int month) {
+    public MonthlySummaryResponse getMonthlySummary(int year, int month, Long userId) {
+
+        if (!appUserRepository.existsById(userId)) {
+            throw new IllegalStateException("User " + userId + " not found");
+        }
 
         LocalDateTime start = LocalDate.of(year, month, 1).atStartOfDay();
         LocalDateTime end = start.plusMonths(1);
 
-        BigDecimal totalIncome = transactionRepository
-                .findByTypeAndTransactionDateTimeBetween(TransactionType.INCOME, start, end)
-                .stream()
+        List<Transaction> transactions =
+                transactionRepository
+                        .findByAccountAppUserIdAndTransactionDateTimeGreaterThanEqualAndTransactionDateTimeLessThan(
+                                userId,
+                                start,
+                                end
+                        );
+
+        List<Transaction> incomeTransactions = transactions.stream()
+                .filter(transaction -> transaction.getType() == TransactionType.INCOME)
+                .toList();
+
+        List<Transaction> expenseTransactions = transactions.stream()
+                .filter(transaction -> transaction.getType() == TransactionType.EXPENSE)
+                .toList();
+
+        BigDecimal totalIncome = incomeTransactions.stream()
                 .map(Transaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        List<Transaction> expenseTransactions = transactionRepository
-                .findByTypeAndTransactionDateTimeBetween(TransactionType.EXPENSE, start, end);
 
         BigDecimal totalExpenses = expenseTransactions.stream()
                 .map(Transaction::getAmount)
@@ -74,16 +93,21 @@ public class ReportService {
         return new MonthlySummaryResponse(totalIncome, totalExpenses, netSavings, expensesByCategory);
     }
 
-    public List<BudgetStatusResponse> getBudgetStatus(int year, int month) {
+    public List<BudgetStatusResponse> getBudgetStatus(int year, int month, Long userId) {
+        if (!appUserRepository.existsById(userId)) {
+            throw new IllegalStateException("User " + userId + " not found");
+        }
+
         String budgetMonth = String.format("%d-%02d", year, month);
 
         LocalDateTime start = LocalDate.of(year, month, 1).atStartOfDay();
         LocalDateTime end = start.plusMonths(1);
 
-        List<Budget> budgets = budgetRepository.findByMonth(budgetMonth);
+        List<Budget> budgets = budgetRepository.findByAppUserIdAndMonth(userId, budgetMonth);
 
         List<Transaction> expenseTransactions = transactionRepository
-                .findByTypeAndTransactionDateTimeBetween(
+                .findByAccountAppUserIdAndTypeAndTransactionDateTimeGreaterThanEqualAndTransactionDateTimeLessThan(
+                        userId,
                         TransactionType.EXPENSE,
                         start,
                         end
@@ -125,14 +149,20 @@ public class ReportService {
                 .toList();
     }
 
-    public List<AccountBalanceResponse> getAccountBalances() {
-        return accountRepository.findAll().stream().map(
-                account -> new AccountBalanceResponse(
+    public List<AccountBalanceResponse> getAccountBalances(Long userId) {
+        if (!appUserRepository.existsById(userId)) {
+            throw new IllegalStateException("User " + userId + " not found");
+        }
+
+        return accountRepository.findByAppUserId(userId)
+                .stream()
+                .map(account -> new AccountBalanceResponse(
                         account.getId(),
                         account.getName(),
                         account.getType(),
                         account.getBalance()
-                )
-        ).toList();
+                ))
+                .toList();
     }
+
 }
