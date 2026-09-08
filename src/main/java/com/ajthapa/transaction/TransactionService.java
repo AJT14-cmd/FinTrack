@@ -96,6 +96,10 @@ public class TransactionService {
 
         Account oldAccount = transaction.getAccount();
 
+        if (!oldAccount.getAppUser().getId().equals(newAccount.getAppUser().getId())) {
+            throw new IllegalStateException("Transaction cannot be moved to another user's account");
+        }
+
         if (transaction.getType() == TransactionType.INCOME) {
             oldAccount.setBalance(oldAccount.getBalance().subtract(transaction.getAmount()));
         } else if (transaction.getType() == TransactionType.EXPENSE) {

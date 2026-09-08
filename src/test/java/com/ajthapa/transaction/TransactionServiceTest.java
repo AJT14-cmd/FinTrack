@@ -6,6 +6,7 @@ import com.ajthapa.account.AccountType;
 import com.ajthapa.category.Category;
 import com.ajthapa.category.CategoryRepository;
 import com.ajthapa.category.CategoryType;
+import com.ajthapa.user.AppUser;
 import com.ajthapa.user.AppUserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +20,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,6 +32,7 @@ class TransactionServiceTest {
     private static final Long CATEGORY_ID = 1L;
     private static final Long ACCOUNT_ID = 10L;
     private static final Long TRANSACTION_ID = 100L;
+    private static final Long USER_ID = 1000L;
 
     @Mock
     private TransactionRepository transactionRepository;
@@ -141,8 +145,9 @@ class TransactionServiceTest {
     void movingTransactionToAnotherAccountUpdatesBothBalances() {
         Long newAccountId = 11L;
         Category category = category(CategoryType.EXPENSE);
-        Account oldAccount = account(ACCOUNT_ID, "80.00");
-        Account newAccount = account(newAccountId, "200.00");
+        AppUser owner = user(USER_ID);
+        Account oldAccount = account(ACCOUNT_ID, "80.00", owner);
+        Account newAccount = account(newAccountId, "200.00", owner);
         Transaction transaction = transaction(oldAccount, "20.00", TransactionType.EXPENSE);
         UpdateTransactionRequest request = new UpdateTransactionRequest(
                 CATEGORY_ID,
@@ -168,6 +173,88 @@ class TransactionServiceTest {
         verify(accountRepository).save(newAccount);
     }
 
+    @Test
+    void updatingExpenseToIncomeChangesBalanceCorrectly() {
+        Category category = category(CategoryType.INCOME);
+        Account account = account(ACCOUNT_ID, "80.00");
+        Transaction transaction = transaction(account, "20.00", TransactionType.EXPENSE);
+        UpdateTransactionRequest request = new UpdateTransactionRequest(
+                CATEGORY_ID,
+                ACCOUNT_ID,
+                "Refund",
+                money("30.00"),
+                TransactionType.INCOME
+        );
+
+        prepareUpdate(category, account, transaction);
+
+        transactionService.updateTransaction(TRANSACTION_ID, request);
+
+        assertAll(
+                () -> assertEquals(money("130.00"), account.getBalance()),
+                () -> assertEquals(TransactionType.INCOME, transaction.getType()),
+                () -> assertEquals(money("30.00"), transaction.getAmount())
+        );
+    }
+
+    @Test
+    void updatingIncomeToExpenseChangesBalanceCorrectly() {
+        Category category = category(CategoryType.EXPENSE);
+        Account account = account(ACCOUNT_ID, "125.00");
+        Transaction transaction = transaction(account, "25.00", TransactionType.INCOME);
+        UpdateTransactionRequest request = new UpdateTransactionRequest(
+                CATEGORY_ID,
+                ACCOUNT_ID,
+                "Corrected purchase",
+                money("30.00"),
+                TransactionType.EXPENSE
+        );
+
+        prepareUpdate(category, account, transaction);
+
+        transactionService.updateTransaction(TRANSACTION_ID, request);
+
+        assertAll(
+                () -> assertEquals(money("70.00"), account.getBalance()),
+                () -> assertEquals(TransactionType.EXPENSE, transaction.getType()),
+                () -> assertEquals(money("30.00"), transaction.getAmount())
+        );
+    }
+
+    @Test
+    void movingTransactionToAnotherUsersAccountIsRejected() {
+        Long newAccountId = 11L;
+        Category category = category(CategoryType.EXPENSE);
+        Account oldAccount = account(ACCOUNT_ID, "80.00", user(USER_ID));
+        Account newAccount = account(newAccountId, "200.00", user(2000L));
+        Transaction transaction = transaction(oldAccount, "20.00", TransactionType.EXPENSE);
+        UpdateTransactionRequest request = new UpdateTransactionRequest(
+                CATEGORY_ID,
+                newAccountId,
+                "Invalid move",
+                money("30.00"),
+                TransactionType.EXPENSE
+        );
+
+        when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(category));
+        when(accountRepository.findById(newAccountId)).thenReturn(Optional.of(newAccount));
+        when(transactionRepository.findById(TRANSACTION_ID)).thenReturn(Optional.of(transaction));
+
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> transactionService.updateTransaction(TRANSACTION_ID, request)
+        );
+
+        assertAll(
+                () -> assertEquals("Transaction cannot be moved to another user's account", exception.getMessage()),
+                () -> assertEquals(money("80.00"), oldAccount.getBalance()),
+                () -> assertEquals(money("200.00"), newAccount.getBalance()),
+                () -> assertSame(oldAccount, transaction.getAccount())
+        );
+        verify(accountRepository, never()).save(any(Account.class));
+        verify(transactionRepository, never()).save(any(Transaction.class));
+    }
+
     private void prepareCreate(Category category, Account account) {
         when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(category));
         when(accountRepository.findById(ACCOUNT_ID)).thenReturn(Optional.of(account));
@@ -187,7 +274,15 @@ class TransactionServiceTest {
     }
 
     private Account account(Long id, String balance) {
-        return new Account(id, "Checking", AccountType.CHECKING, money(balance), null);
+        return account(id, balance, user(USER_ID));
+    }
+
+    private Account account(Long id, String balance, AppUser owner) {
+        return new Account(id, "Checking", AccountType.CHECKING, money(balance), owner);
+    }
+
+    private AppUser user(Long id) {
+        return new AppUser(id, "Test User", "user" + id + "@example.com");
     }
 
     private Transaction transaction(Account account, String amount, TransactionType type) {
