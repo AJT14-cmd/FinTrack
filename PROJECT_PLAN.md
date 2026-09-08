@@ -441,3 +441,83 @@ Later polish features:
 - Docker
 - Deployment
 - Authentication
+
+## Current Next Phase: Authentication Before Frontend
+
+FinTrack now has users, accounts, categories, transactions, budgets, reports, PostgreSQL integration, Docker configuration, validation, error handling, and initial service tests.
+
+The next major feature should be authentication, followed by the frontend.
+
+The API currently accepts `userId` values from clients. A client could change that value and request another user's financial data. Authentication establishes which user made a request, while authorization ensures that user can access only their own data.
+
+```text
+Authentication = Who are you?
+Authorization = Are you allowed to access this data?
+```
+
+### Phase 1: Stabilize the Backend
+
+- Create an isolated test configuration that never uses the development database.
+- Replace `spring.jpa.hibernate.ddl-auto=create-drop` with Flyway migrations before storing important data.
+- Add service tests for report calculations and ownership checks.
+- Add controller tests for validation and HTTP status codes.
+
+### Phase 2: Add Authentication
+
+- Add a password field to `AppUser` without exposing it in response DTOs.
+- Hash passwords with BCrypt instead of storing plain-text passwords.
+- Add registration and login endpoints.
+- Learn the Spring Security filter chain and authenticated principal.
+- Use JWT authentication if the frontend will run as a separate application.
+
+Planned endpoints:
+
+```text
+POST /api/auth/register
+POST /api/auth/login
+GET  /api/users/me
+```
+
+### Phase 3: Add Authorization
+
+- Read the current user's identity from Spring Security.
+- Stop trusting `userId` values supplied by clients.
+- Verify ownership when reading, updating, or deleting accounts, transactions, and budgets.
+- Scope all financial reports to the authenticated user.
+- Return `403 Forbidden` when an authenticated user tries to access another user's data.
+
+For example, replace:
+
+```text
+GET /api/reports/account-balances?userId=1
+```
+
+with:
+
+```text
+GET /api/reports/account-balances
+```
+
+Spring Security will determine the user instead of trusting an ID from the request.
+
+### Phase 4: Build the Frontend
+
+Build the frontend after the authentication and authorization contract is stable.
+
+Start with these screens:
+
+- Registration and login
+- Account overview
+- Transaction list and transaction form
+- Budget tracking
+- Monthly summary dashboard
+
+### Next Milestone
+
+The immediate milestone is:
+
+```text
+A user can register, log in, and retrieve their own accounts without supplying a userId.
+```
+
+Once this works, the frontend will have a secure API to build against.

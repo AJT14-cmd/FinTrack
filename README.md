@@ -239,21 +239,21 @@ docker compose down
 
 ## Testing
 
-Run the transaction balance unit tests without starting Spring or connecting to PostgreSQL:
+Run the complete test suite:
 
 On Windows PowerShell:
 
 ```powershell
-.\mvnw.cmd -Dtest=TransactionServiceTest test
+.\mvnw.cmd test
 ```
 
 On macOS or Linux:
 
 ```bash
-./mvnw -Dtest=TransactionServiceTest test
+./mvnw test
 ```
 
-The full context test currently uses the configured datasource, so it should only be run against a disposable test database while `create-drop` is enabled.
+Tests use the `test` Spring profile and an in-memory H2 database. Running the test suite does not connect to or modify the development PostgreSQL database.
 
 ## What I Learned
 
