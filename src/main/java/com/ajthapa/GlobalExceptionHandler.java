@@ -1,6 +1,6 @@
 package com.ajthapa;
 
-import com.ajthapa.user.EmailAlreadyExistsException;
+import com.ajthapa.auth.EmailAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;

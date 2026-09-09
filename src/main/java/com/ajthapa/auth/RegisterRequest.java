@@ -1,4 +1,4 @@
-package com.ajthapa.user;
+package com.ajthapa.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

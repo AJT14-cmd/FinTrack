@@ -1,4 +1,4 @@
-package com.ajthapa.user;
+package com.ajthapa.auth;
 
 public class EmailAlreadyExistsException extends RuntimeException {
 

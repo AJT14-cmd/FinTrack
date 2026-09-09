@@ -6,9 +6,6 @@ import com.ajthapa.budget.BudgetResponse;
 import com.ajthapa.budget.BudgetService;
 import com.ajthapa.transaction.TransactionResponse;
 import com.ajthapa.transaction.TransactionService;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -53,13 +50,4 @@ public class AppUserController {
     public AppUserResponse getUsersById(@PathVariable Long id) {
         return appUserService.getUsersById(id);
     }
-
-    @PostMapping
-    public ResponseEntity<?> addNewUsers(@Valid @RequestBody RegisterRequest registerRequest) {
-        AppUserResponse appUserResponse =  appUserService.register(registerRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(appUserResponse);
-    }
-
-
-
 }

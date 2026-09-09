@@ -1,7 +1,11 @@
-package com.ajthapa.user;
+package com.ajthapa.auth;
 
+import com.ajthapa.user.AppUser;
+import com.ajthapa.user.AppUserRepository;
+import com.ajthapa.user.AppUserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -17,7 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class AppUserServiceTest {
+class AuthServiceTest {
 
     @Mock
     private AppUserRepository appUserRepository;
@@ -26,7 +30,7 @@ class AppUserServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @InjectMocks
-    private AppUserService appUserService;
+    private AuthService authService;
 
     @Test
     void registrationHashesPasswordBeforeSavingUser() {
@@ -40,12 +44,14 @@ class AppUserServiceTest {
             return user;
         });
 
-        AppUserResponse response = appUserService.register(request);
+        AppUserResponse response = authService.register(request);
 
+        ArgumentCaptor<AppUser> userCaptor = ArgumentCaptor.forClass(AppUser.class);
+        verify(appUserRepository).save(userCaptor.capture());
         assertEquals("Test User", response.name());
         assertEquals("test.user@example.com", response.email());
+        assertEquals("encoded-password", userCaptor.getValue().getPasswordHash());
         verify(passwordEncoder).encode("Password1!");
-        verify(appUserRepository).save(any(AppUser.class));
     }
 
     @Test
@@ -57,7 +63,7 @@ class AppUserServiceTest {
 
         EmailAlreadyExistsException exception = assertThrows(
                 EmailAlreadyExistsException.class,
-                () -> appUserService.register(request)
+                () -> authService.register(request)
         );
 
         assertEquals("A user with email test@example.com already exists", exception.getMessage());
