@@ -1,6 +1,7 @@
 package com.ajthapa;
 
 import com.ajthapa.auth.EmailAlreadyExistsException;
+import com.ajthapa.auth.InvalidCredentialsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,5 +34,11 @@ public class GlobalExceptionHandler {
                 ).findFirst()
                 .orElse("Validation Failed");
         return new ErrorResponse(message);
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleInvalidCredentialsExceptions(InvalidCredentialsException exception) {
+        return new ErrorResponse(exception.getMessage());
     }
 }

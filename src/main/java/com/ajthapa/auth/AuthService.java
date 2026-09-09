@@ -13,10 +13,12 @@ public class AuthService {
 
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public AuthService(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public AppUserResponse register(RegisterRequest registerRequest) {
@@ -36,6 +38,18 @@ public class AuthService {
         AppUser savedUser = appUserRepository.save(user);
 
         return mapResponse(savedUser);
+    }
+
+    public LoginResponse login(LoginRequest loginRequest) {
+        String email = loginRequest.email().trim().toLowerCase(Locale.ROOT);
+
+        AppUser user = appUserRepository.findByEmail(email).orElseThrow(InvalidCredentialsException::new);
+        if (!passwordEncoder.matches(loginRequest.password(), user.getPasswordHash())) {
+            throw new InvalidCredentialsException();
+        }
+
+        String token = jwtService.generateToken(user);
+        return new LoginResponse(token, "Bearer", jwtService.getExpirationSeconds());
     }
 
     private AppUserResponse mapResponse(AppUser appUser) {

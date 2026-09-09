@@ -29,6 +29,9 @@ class AuthServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private JwtService jwtService;
+
     @InjectMocks
     private AuthService authService;
 
@@ -69,5 +72,45 @@ class AuthServiceTest {
         assertEquals("A user with email test@example.com already exists", exception.getMessage());
         verify(passwordEncoder, never()).encode(any());
         verify(appUserRepository, never()).save(any(AppUser.class));
+    }
+
+    @Test
+    void loginReturnsTokenWhenPasswordMatches() {
+        LoginRequest request = new LoginRequest(" Test@Example.com ", "Password1!");
+        AppUser user = new AppUser("Test User", "test@example.com", "encoded-password");
+        user.setId(1L);
+        when(appUserRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("Password1!", "encoded-password")).thenReturn(true);
+        when(jwtService.generateToken(user)).thenReturn("signed-token");
+        when(jwtService.getExpirationSeconds()).thenReturn(3600L);
+
+        LoginResponse response = authService.login(request);
+
+        assertEquals("signed-token", response.token());
+        assertEquals("Bearer", response.tokenType());
+        assertEquals(3600L, response.expiresIn());
+    }
+
+    @Test
+    void loginRejectsIncorrectPasswordWithoutCreatingToken() {
+        LoginRequest request = new LoginRequest("test@example.com", "WrongPassword1!");
+        AppUser user = new AppUser("Test User", "test@example.com", "encoded-password");
+        when(appUserRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("WrongPassword1!", "encoded-password")).thenReturn(false);
+
+        assertThrows(InvalidCredentialsException.class, () -> authService.login(request));
+
+        verify(jwtService, never()).generateToken(any(AppUser.class));
+    }
+
+    @Test
+    void loginRejectsUnknownEmailWithoutCheckingPassword() {
+        LoginRequest request = new LoginRequest("missing@example.com", "Password1!");
+        when(appUserRepository.findByEmail("missing@example.com")).thenReturn(Optional.empty());
+
+        assertThrows(InvalidCredentialsException.class, () -> authService.login(request));
+
+        verify(passwordEncoder, never()).matches(any(), any());
+        verify(jwtService, never()).generateToken(any(AppUser.class));
     }
 }
