@@ -282,7 +282,9 @@ class TransactionServiceTest {
     }
 
     private AppUser user(Long id) {
-        return new AppUser(id, "Test User", "user" + id + "@example.com");
+        AppUser user = new AppUser("Test User", "user" + id + "@example.com", "$2a$10$testHash");
+        user.setId(id);
+        return user;
     }
 
     private Transaction transaction(Account account, String amount, TransactionType type) {

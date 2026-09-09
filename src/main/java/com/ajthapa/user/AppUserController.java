@@ -55,8 +55,8 @@ public class AppUserController {
     }
 
     @PostMapping
-    public ResponseEntity<?> addNewUsers(@Valid @RequestBody CreateAppUserRequest createAppUserRequest) {
-        AppUserResponse appUserResponse =  appUserService.insertAppUser(createAppUserRequest);
+    public ResponseEntity<?> addNewUsers(@Valid @RequestBody RegisterRequest registerRequest) {
+        AppUserResponse appUserResponse =  appUserService.register(registerRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(appUserResponse);
     }
 

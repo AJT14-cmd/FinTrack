@@ -1,5 +1,6 @@
 package com.ajthapa;
 
+import com.ajthapa.user.EmailAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,6 +13,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleIllegalStateException(IllegalStateException exception) {
+        return new ErrorResponse(exception.getMessage());
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleEmailAlreadyExistsException(EmailAlreadyExistsException exception) {
         return new ErrorResponse(exception.getMessage());
     }
 

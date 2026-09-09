@@ -12,16 +12,19 @@ public class AppUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
+    @Column(nullable = false, unique = true)
     private String email;
+    @Column(nullable = false)
+    private String passwordHash;
     private LocalDateTime createdAt;
 
     protected AppUser() {
     }
 
-    public AppUser(Long id, String name, String email) {
-        this.id = id;
+    public AppUser(String name, String email, String passwordHash) {
         this.name = name;
         this.email = email;
+        this.passwordHash = passwordHash;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -41,6 +44,10 @@ public class AppUser {
         return this.createdAt;
     }
 
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -51,6 +58,10 @@ public class AppUser {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     @Override

@@ -62,8 +62,10 @@ class ReportServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        requestedUser = appUserRepository.save(new AppUser(null, "Requested User", "requested@example.com"));
-        otherUser = appUserRepository.save(new AppUser(null, "Other User", "other@example.com"));
+        requestedUser = appUserRepository.save(new AppUser(
+                "Requested User", "requested@example.com", "$2a$10$testHashRequestedUser"));
+        otherUser = appUserRepository.save(new AppUser(
+                "Other User", "other@example.com", "$2a$10$testHashOtherUser"));
 
         requestedUserAccount = accountRepository.save(new Account(
                 null, "Requested Checking", AccountType.CHECKING, money("1000.00"), requestedUser));
