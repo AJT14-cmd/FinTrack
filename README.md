@@ -60,7 +60,7 @@ The application runs at `http://localhost:8080` by default.
 | `POST` | `/api/auth/register` | Register a user |
 | `POST` | `/api/auth/login` | Log in and receive a JWT |
 | `GET` | `/api/users` | List users |
-| `GET` | `/api/users/{id}` | Get one user |
+| `GET` | `/api/users/me` | Get the authenticated user |
 | `GET` | `/api/users/{userId}/accounts` | List a user's accounts |
 | `GET` | `/api/users/{userId}/transactions` | List a user's transactions |
 | `GET` | `/api/users/{userId}/budgets` | List a user's budgets |
@@ -115,7 +115,14 @@ The response contains a token with a one-hour lifetime. Store its `token` value 
 @token = paste_token_here
 ```
 
-### 3. Create an expense category
+### 3. View the current user
+
+```http
+GET http://localhost:8080/api/users/me
+Authorization: Bearer {{token}}
+```
+
+### 4. Create an expense category
 
 ```http
 POST http://localhost:8080/api/categories
@@ -128,7 +135,7 @@ Authorization: Bearer {{token}}
 }
 ```
 
-### 4. Create an account
+### 5. Create an account
 
 ```http
 POST http://localhost:8080/api/accounts
@@ -143,7 +150,7 @@ Authorization: Bearer {{token}}
 }
 ```
 
-### 5. Create a transaction
+### 6. Create a transaction
 
 ```http
 POST http://localhost:8080/api/transactions
@@ -161,7 +168,7 @@ Authorization: Bearer {{token}}
 
 This expense decreases the selected account's balance by `75.50`. An `INCOME` transaction increases it.
 
-### 6. Create a monthly budget
+### 7. Create a monthly budget
 
 ```http
 POST http://localhost:8080/api/budgets
@@ -176,7 +183,7 @@ Authorization: Bearer {{token}}
 }
 ```
 
-### 7. View user-scoped reports
+### 8. View user-scoped reports
 
 ```http
 GET http://localhost:8080/api/reports/monthly-summary?year=2026&month=9&userId=1

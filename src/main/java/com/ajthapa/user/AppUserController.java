@@ -6,7 +6,9 @@ import com.ajthapa.budget.BudgetResponse;
 import com.ajthapa.budget.BudgetService;
 import com.ajthapa.transaction.TransactionResponse;
 import com.ajthapa.transaction.TransactionService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.List;
 
@@ -46,8 +48,9 @@ public class AppUserController {
         return budgetService.findByAppUserId(userId);
     }
 
-    @GetMapping("{id}")
-    public AppUserResponse getUsersById(@PathVariable Long id) {
-        return appUserService.getUsersById(id);
+    @GetMapping("/me")
+    public AppUserResponse getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
+        Long userId = Long.valueOf(jwt.getSubject());
+        return appUserService.getUsersById(userId);
     }
 }
