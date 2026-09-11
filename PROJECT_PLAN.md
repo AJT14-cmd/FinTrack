@@ -458,7 +458,7 @@ Authorization = Are you allowed to access this data?
 ### Phase 1: Stabilize the Backend
 
 - Create an isolated test configuration that never uses the development database.
-- Replace `spring.jpa.hibernate.ddl-auto=create-drop` with Flyway migrations before storing important data.
+- Manage schema changes with Flyway migrations and keep Hibernate in `validate` mode.
 - Add service tests for report calculations and ownership checks.
 - Add controller tests for validation and HTTP status codes.
 

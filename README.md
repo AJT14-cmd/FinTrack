@@ -33,6 +33,7 @@ This project was built to learn backend application development with Java and Sp
 | Spring Security | Password hashing and endpoint protection |
 | OAuth2 Resource Server | JWT creation and validation |
 | PostgreSQL | Relational database |
+| Flyway | Versioned database schema migrations |
 | Docker Compose | Local PostgreSQL environment |
 | Maven Wrapper | Build and dependency management |
 | JUnit 5 and Mockito | Unit testing |
@@ -281,8 +282,10 @@ The API is ready when the application reports that it started on port `8080`.
 docker compose down
 ```
 
+Flyway applies versioned migrations from `src/main/resources/db/migration` when the application starts. Hibernate uses `validate`, so it verifies that the migrated schema matches the JPA entities without recreating tables or deleting data.
+
 > [!WARNING]
-> The current development configuration uses `spring.jpa.hibernate.ddl-auto=create-drop`. Hibernate recreates the database schema when the application starts and removes it when the application stops. Do not use this setting for production or for data you need to preserve.
+> A PostgreSQL database previously created by Hibernate may contain tables but no Flyway history. Back up any data you need before adopting the first migration. For disposable local data, run `docker compose down -v` once and then `docker compose up -d` to create a fresh database. The `-v` command permanently deletes the local database volume.
 
 ## Testing
 
@@ -300,7 +303,7 @@ On macOS or Linux:
 ./mvnw test
 ```
 
-Tests use the `test` Spring profile and an in-memory H2 database. Running the test suite does not connect to or modify the development PostgreSQL database.
+Tests use the `test` Spring profile and an in-memory H2 database. Flyway builds the H2 schema from the same migrations and Hibernate validates it before tests run. The suite does not connect to or modify the development PostgreSQL database.
 
 ## What I Learned
 
@@ -317,12 +320,12 @@ Building FinTrack gave me practical experience with:
 - Managing local infrastructure and environment variables with Docker Compose
 - Protecting database credentials from source control
 - Hashing passwords with BCrypt and authenticating stateless requests with JWTs
+- Managing schema changes with versioned Flyway migrations
 
 ## Planned Features
 
-- Add an isolated test profile with Testcontainers or a dedicated test database
+- Add PostgreSQL Testcontainers coverage for database migrations
 - Expand unit, repository, and controller test coverage
-- Replace automatic schema recreation with Flyway database migrations
 - Complete ownership tests for authenticated account, transaction, budget, and report operations
 - Make categories user-owned and remove unrestricted collection endpoints
 - Add transaction filtering, sorting, pagination, and custom date ranges
