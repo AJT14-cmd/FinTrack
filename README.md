@@ -6,8 +6,8 @@ This project was built to learn backend application development with Java and Sp
 
 ## Features
 
-- Create and view users
 - Register users with validated credentials and BCrypt password hashing
+- View the authenticated user's profile
 - Log in with email and password to receive a signed JWT
 - Require JWT authentication for all non-authentication endpoints
 - Create, read, update, and delete financial accounts
@@ -15,7 +15,7 @@ This project was built to learn backend application development with Java and Sp
 - Create, read, update, and delete transactions
 - Automatically update account balances when transactions change
 - Create and manage monthly category budgets
-- Retrieve accounts, transactions, and budgets for a specific user
+- Retrieve accounts, transactions, and budgets for the authenticated user
 - Generate user-scoped monthly summaries, budget statuses, and account balance reports
 - Validate incoming request data and return centralized error responses
 - Test transaction balance rules with JUnit and Mockito
@@ -59,18 +59,14 @@ The application runs at `http://localhost:8080` by default.
 | --- | --- | --- |
 | `POST` | `/api/auth/register` | Register a user |
 | `POST` | `/api/auth/login` | Log in and receive a JWT |
-| `GET` | `/api/users` | List users |
 | `GET` | `/api/users/me` | Get the authenticated user |
-| `GET` | `/api/users/{userId}/accounts` | List a user's accounts |
-| `GET` | `/api/users/{userId}/transactions` | List a user's transactions |
-| `GET` | `/api/users/{userId}/budgets` | List a user's budgets |
-| `GET`, `POST` | `/api/accounts` | List or create accounts |
+| `GET`, `POST` | `/api/accounts` | List or create the authenticated user's accounts |
 | `GET`, `PUT`, `DELETE` | `/api/accounts/{id}` | Read, update, or delete an account |
 | `GET`, `POST` | `/api/categories` | List or create categories |
 | `GET`, `PUT`, `DELETE` | `/api/categories/{id}` | Read, update, or delete a category |
-| `GET`, `POST` | `/api/transactions` | List or create transactions |
+| `GET`, `POST` | `/api/transactions` | List or create the authenticated user's transactions |
 | `GET`, `PUT`, `DELETE` | `/api/transactions/{id}` | Read, update, or delete a transaction |
-| `GET`, `POST` | `/api/budgets` | List or create budgets |
+| `GET`, `POST` | `/api/budgets` | List or create the authenticated user's budgets |
 | `GET`, `PUT`, `DELETE` | `/api/budgets/{id}` | Read, update, or delete a budget |
 | `GET` | `/api/reports/monthly-summary` | Get a user's monthly totals and category spending |
 | `GET` | `/api/reports/budget-status` | Compare a user's monthly spending with their budgets |
@@ -78,7 +74,7 @@ The application runs at `http://localhost:8080` by default.
 
 Supported account types are `CHECKING`, `SAVINGS`, `CREDIT_CARD`, `CASH`, and `INVESTMENT_ACCOUNT`. Transaction and category types are `INCOME` and `EXPENSE`.
 
-The registration and login endpoints are public. Every other endpoint requires an `Authorization: Bearer <token>` header. Authentication is implemented, but resource ownership is not fully enforced yet; authenticated users must not be treated as isolated from one another until the planned ownership checks are complete.
+The registration and login endpoints are public. Every other endpoint requires an `Authorization: Bearer <token>` header. Account, transaction, budget, and report endpoints derive the current user from the signed token rather than accepting a user ID from the client. Category ownership is still a planned decision.
 
 ## API Examples
 
@@ -145,8 +141,7 @@ Authorization: Bearer {{token}}
 {
   "name": "Main Checking",
   "type": "CHECKING",
-  "balance": 1000.00,
-  "appUserId": 1
+  "balance": 1000.00
 }
 ```
 
@@ -177,7 +172,6 @@ Authorization: Bearer {{token}}
 
 {
   "categoryId": 1,
-  "appUserId": 1,
   "month": "2026-09",
   "limitAmount": 400.00
 }
@@ -186,17 +180,17 @@ Authorization: Bearer {{token}}
 ### 8. View user-scoped reports
 
 ```http
-GET http://localhost:8080/api/reports/monthly-summary?year=2026&month=9&userId=1
+GET http://localhost:8080/api/reports/monthly-summary?year=2026&month=9
 Authorization: Bearer {{token}}
 
 ###
 
-GET http://localhost:8080/api/reports/budget-status?year=2026&month=9&userId=1
+GET http://localhost:8080/api/reports/budget-status?year=2026&month=9
 Authorization: Bearer {{token}}
 
 ###
 
-GET http://localhost:8080/api/reports/account-balances?userId=1
+GET http://localhost:8080/api/reports/account-balances
 Authorization: Bearer {{token}}
 ```
 
@@ -329,7 +323,7 @@ Building FinTrack gave me practical experience with:
 - Add an isolated test profile with Testcontainers or a dedicated test database
 - Expand unit, repository, and controller test coverage
 - Replace automatic schema recreation with Flyway database migrations
-- Enforce resource ownership using the authenticated JWT subject instead of request-supplied user IDs
+- Complete ownership tests for authenticated account, transaction, budget, and report operations
 - Make categories user-owned and remove unrestricted collection endpoints
 - Add transaction filtering, sorting, pagination, and custom date ranges
 - Publish interactive API documentation with OpenAPI and Swagger UI

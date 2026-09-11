@@ -10,7 +10,6 @@ import java.math.BigDecimal;
 public record CreateAccountRequest(
         @NotBlank String name,
         @NotNull AccountType type,
-        @NotNull @PositiveOrZero @Digits(integer = 12, fraction = 2) BigDecimal balance,
-        @NotNull Long appUserId
+        @NotNull @PositiveOrZero @Digits(integer = 12, fraction = 2) BigDecimal balance
 ) {
 }

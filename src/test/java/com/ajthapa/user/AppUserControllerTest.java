@@ -1,8 +1,5 @@
 package com.ajthapa.user;
 
-import com.ajthapa.account.AccountService;
-import com.ajthapa.budget.BudgetService;
-import com.ajthapa.transaction.TransactionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,15 +18,6 @@ class AppUserControllerTest {
 
     @Mock
     private AppUserService appUserService;
-
-    @Mock
-    private AccountService accountService;
-
-    @Mock
-    private TransactionService transactionService;
-
-    @Mock
-    private BudgetService budgetService;
 
     @InjectMocks
     private AppUserController appUserController;

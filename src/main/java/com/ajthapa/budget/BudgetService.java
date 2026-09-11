@@ -21,20 +21,20 @@ public class BudgetService {
         this.appUserRepository = appUserRepository;
     }
 
-    public List<BudgetResponse> getAllBudgets() {
-        return budgetRepository.findAll().stream().map(this::mapResponse).toList();
+    public List<BudgetResponse> getAllBudgets(Long userId) {
+        return budgetRepository.findByAppUserId(userId).stream().map(this::mapResponse).toList();
     }
 
-    public BudgetResponse getBudgetById(Long id) {
-        return budgetRepository.findById(id).map(this::mapResponse).orElseThrow(() ->
+    public BudgetResponse getBudgetById(Long id, Long userId) {
+        return budgetRepository.findByIdAndAppUserId(id, userId).map(this::mapResponse).orElseThrow(() ->
                 new IllegalStateException("Budget " + id + " not found"));
     }
 
-    public BudgetResponse createBudget(CreateBudgetRequest createBudgetRequest) {
+    public BudgetResponse createBudget(CreateBudgetRequest createBudgetRequest, Long userId) {
         Category category = categoryRepository.findById(createBudgetRequest.categoryId())
                 .orElseThrow(() -> new IllegalStateException("Category " + createBudgetRequest.categoryId() + " not found"));
-        AppUser appUser = appUserRepository.findById(createBudgetRequest.appUserId())
-                .orElseThrow(() -> new IllegalStateException("User " + createBudgetRequest.appUserId() + " not found"));
+        AppUser appUser = appUserRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException("User " + userId + " not found"));
 
         Budget budget = new Budget(
                 null,
@@ -49,39 +49,30 @@ public class BudgetService {
         return mapResponse(savedBudget);
     }
 
-    public void deleteBudget(Long id) {
-        Budget budget = budgetRepository.findById(id)
+    public void deleteBudget(Long id, Long userId) {
+        Budget budget = budgetRepository.findByIdAndAppUserId(id, userId)
                 .orElseThrow(() -> new IllegalStateException("Budget " + id + " not found"));
 
         budgetRepository.delete(budget);
 
     }
 
-    public BudgetResponse updateBudget(Long id, UpdateBudgetRequest updateBudgetRequest) {
+    public BudgetResponse updateBudget(Long id, UpdateBudgetRequest updateBudgetRequest, Long userId) {
         Category category = categoryRepository.findById(updateBudgetRequest.categoryId())
                 .orElseThrow(() -> new IllegalStateException("Category " + updateBudgetRequest.categoryId() + " not found"));
-        AppUser appUser = appUserRepository.findById(updateBudgetRequest.appUserId())
-                .orElseThrow(() -> new IllegalStateException("User " + updateBudgetRequest.appUserId() + " not found"));
+        appUserRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException("User " + userId + " not found"));
 
-        Budget budget = budgetRepository.findById(id)
+        Budget budget = budgetRepository.findByIdAndAppUserId(id, userId)
                 .orElseThrow(() -> new IllegalStateException("Budget " + id + " not found"));
 
         budget.setCategory(category);
-        budget.setAppUser(appUser);
         budget.setMonth(updateBudgetRequest.month());
         budget.setLimitAmount(updateBudgetRequest.limitAmount());
 
         Budget savedBudget = budgetRepository.save(budget);
 
         return mapResponse(savedBudget);
-    }
-
-    public List<BudgetResponse> findByAppUserId(Long appUserId) {
-        if (!appUserRepository.existsById(appUserId)) {
-            throw new IllegalStateException("User " + appUserId + " not found");
-        }
-
-        return budgetRepository.findByAppUserId(appUserId).stream().map(this::mapResponse).toList();
     }
 
     private BudgetResponse mapResponse(Budget budget) {

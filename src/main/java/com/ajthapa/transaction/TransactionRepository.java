@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     List<Transaction> findByAccountAppUserId(Long appUserId);
@@ -19,5 +20,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             TransactionType type,
             LocalDateTime start,
             LocalDateTime end
+    );
+
+    Optional<Transaction> findByIdAndAccountAppUserId(
+            Long transactionId,
+            Long userId
     );
 }

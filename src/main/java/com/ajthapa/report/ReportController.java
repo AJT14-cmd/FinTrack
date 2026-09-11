@@ -2,6 +2,8 @@ package com.ajthapa.report;
 
 import com.ajthapa.account.AccountBalanceResponse;
 import com.ajthapa.budget.BudgetStatusResponse;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,21 +23,21 @@ public class ReportController {
     @GetMapping("monthly-summary")
     public MonthlySummaryResponse getMonthlySummary(@RequestParam int year,
                                                     @RequestParam int month,
-                                                    @RequestParam Long userId) {
-        return reportService.getMonthlySummary(year, month, userId);
+                                                    @AuthenticationPrincipal Jwt jwt) {
+        return reportService.getMonthlySummary(year, month, Long.valueOf(jwt.getSubject()));
     }
 
     @GetMapping("budget-status")
     public List<BudgetStatusResponse> getBudgetStatus(
             @RequestParam int year,
             @RequestParam int month,
-            @RequestParam Long userId
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        return reportService.getBudgetStatus(year, month, userId);
+        return reportService.getBudgetStatus(year, month, Long.valueOf(jwt.getSubject()));
     }
 
     @GetMapping("/account-balances")
-    public List<AccountBalanceResponse> getAccountBalances(@RequestParam Long userId) {
-        return reportService.getAccountBalances(userId);
+    public List<AccountBalanceResponse> getAccountBalances(@AuthenticationPrincipal Jwt jwt) {
+        return reportService.getAccountBalances(Long.valueOf(jwt.getSubject()));
     }
 }

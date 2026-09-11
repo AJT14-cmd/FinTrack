@@ -3,6 +3,8 @@ package com.ajthapa.account;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,30 +19,34 @@ public class AccountController {
     }
 
     @GetMapping
-    public List<AccountResponse> getAllAccounts() {
-        return accountService.getAllAccounts();
+    public List<AccountResponse> getAccounts(@AuthenticationPrincipal Jwt jwt) {
+        Long userId = Long.valueOf(jwt.getSubject());
+        return accountService.getAccounts(userId);
     }
 
     @GetMapping("{id}")
-    public AccountResponse getAccountById(@PathVariable Long id) {
-        return accountService.getAccountById(id);
+    public AccountResponse getAccountById(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        return accountService.getAccountById(id, Long.valueOf(jwt.getSubject()));
     }
 
     @PostMapping
-    public ResponseEntity<AccountResponse> createAccount(@Valid @RequestBody CreateAccountRequest createAccountRequest) {
-        AccountResponse accountResponse = accountService.createAccount(createAccountRequest);
+    public ResponseEntity<AccountResponse> createAccount(@Valid @RequestBody CreateAccountRequest createAccountRequest,
+                                                         @AuthenticationPrincipal Jwt jwt) {
+        AccountResponse accountResponse = accountService.createAccount(Long.valueOf(jwt.getSubject()), createAccountRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(accountResponse);
     }
 
     @DeleteMapping("{id}")
-    public ResponseEntity<Void> deleteAccount(@PathVariable Long id) {
-        accountService.deleteAccount(id);
+    public ResponseEntity<Void> deleteAccount(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        accountService.deleteAccount(id, Long.valueOf(jwt.getSubject()));
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<AccountResponse> updateAccount(@PathVariable Long id, @Valid @RequestBody UpdateAccountRequest updateAccountRequest) {
-        AccountResponse accountResponse = accountService.updateAccount(id, updateAccountRequest);
+    public ResponseEntity<AccountResponse> updateAccount(@PathVariable Long id,
+                                                         @Valid @RequestBody UpdateAccountRequest updateAccountRequest,
+                                                         @AuthenticationPrincipal Jwt jwt) {
+        AccountResponse accountResponse = accountService.updateAccount(id, updateAccountRequest, Long.valueOf(jwt.getSubject()));
         return ResponseEntity.ok(accountResponse);
     }
 }

@@ -1,7 +1,6 @@
 package com.ajthapa.transaction;
 import com.ajthapa.account.Account;
 import com.ajthapa.account.AccountRepository;
-import com.ajthapa.user.AppUserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,31 +14,29 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final CategoryRepository categoryRepository;
     private final AccountRepository accountRepository;
-    private final AppUserRepository appUserRepository;
 
     public TransactionService(TransactionRepository transactionRepository, CategoryRepository categoryRepository,
-                              AccountRepository accountRepository, AppUserRepository appUserRepository) {
+                              AccountRepository accountRepository) {
         this.transactionRepository = transactionRepository;
         this.categoryRepository = categoryRepository;
         this.accountRepository = accountRepository;
-        this.appUserRepository = appUserRepository;
     }
 
-    public List<TransactionResponse> getAllTransactions() {
-        return transactionRepository.findAll().stream().map(this::mapResponse).toList();
+    public List<TransactionResponse> getAllTransactions(Long userId) {
+        return transactionRepository.findByAccountAppUserId(userId).stream().map(this::mapResponse).toList();
     }
 
-    public TransactionResponse getTransactionById(Long id) {
-        return transactionRepository.findById(id).map(this::mapResponse).orElseThrow(() ->
+    public TransactionResponse getTransactionById(Long id, Long userId) {
+        return transactionRepository.findByIdAndAccountAppUserId(id, userId).map(this::mapResponse).orElseThrow(() ->
                 new IllegalStateException(id + " not found"));
     }
 
     @Transactional
-    public TransactionResponse insertTransaction(CreateTransactionRequest createTransactionRequest) {
+    public TransactionResponse insertTransaction(CreateTransactionRequest createTransactionRequest, Long userId) {
         Category category = categoryRepository.findById(createTransactionRequest.categoryId())
                 .orElseThrow(() -> new IllegalStateException("Category " + createTransactionRequest.categoryId() + " not found"));
 
-        Account account = accountRepository.findById(createTransactionRequest.accountId())
+        Account account = accountRepository.findByIdAndAppUserId(createTransactionRequest.accountId(), userId)
                 .orElseThrow(() -> new IllegalStateException("Account " + createTransactionRequest.accountId() + " not found"));
 
         if (createTransactionRequest.type() == TransactionType.INCOME) {
@@ -65,8 +62,8 @@ public class TransactionService {
     }
 
     @Transactional
-    public void deleteTransaction(Long id) {
-        Transaction transaction = transactionRepository.findById(id)
+    public void deleteTransaction(Long id, Long userId) {
+        Transaction transaction = transactionRepository.findByIdAndAccountAppUserId(id, userId)
                 .orElseThrow(() -> new IllegalStateException(id + " not found"));
 
         Account account = transaction.getAccount();
@@ -84,14 +81,14 @@ public class TransactionService {
     }
 
     @Transactional
-    public TransactionResponse updateTransaction(Long id, UpdateTransactionRequest updateTransactionRequest) {
+    public TransactionResponse updateTransaction(Long id, UpdateTransactionRequest updateTransactionRequest, Long userId) {
         Category category = categoryRepository.findById(updateTransactionRequest.categoryId())
                 .orElseThrow(() -> new IllegalStateException("Category " + updateTransactionRequest.categoryId() + " not found"));
 
-        Account newAccount = accountRepository.findById(updateTransactionRequest.accountId())
+        Account newAccount = accountRepository.findByIdAndAppUserId(updateTransactionRequest.accountId(), userId)
                 .orElseThrow(() -> new IllegalStateException("Account " + updateTransactionRequest.accountId() + " not found"));
 
-        Transaction transaction = transactionRepository.findById(id)
+        Transaction transaction = transactionRepository.findByIdAndAccountAppUserId(id, userId)
                 .orElseThrow(() -> new IllegalStateException(id + " not found"));
 
         Account oldAccount = transaction.getAccount();
@@ -124,16 +121,6 @@ public class TransactionService {
         Transaction savedTransaction = transactionRepository.save(transaction);
 
         return mapResponse(savedTransaction);
-    }
-
-    public List<TransactionResponse> findByAppUserId(Long appUserId) {
-        if (!appUserRepository.existsById(appUserId)) {
-            throw new IllegalStateException("User " + appUserId + " not found");
-        }
-
-        return transactionRepository.findByAccountAppUserId(appUserId).stream()
-                .map(this::mapResponse)
-                .toList();
     }
 
     private TransactionResponse mapResponse(Transaction transaction) {

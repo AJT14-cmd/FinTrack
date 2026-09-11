@@ -16,18 +16,18 @@ public class AccountService {
         this.appUserRepository = appUserRepository;
     }
 
-    public List<AccountResponse> getAllAccounts() {
-        return accountRepository.findAll().stream().map(this::mapResponse).toList();
+    public List<AccountResponse> getAccounts(Long userId) {
+        return accountRepository.findByAppUserId(userId).stream().map(this::mapResponse).toList();
     }
 
-    public AccountResponse getAccountById(Long id) {
-        return accountRepository.findById(id).map(this::mapResponse)
+    public AccountResponse getAccountById(Long id, Long userId) {
+        return accountRepository.findByIdAndAppUserId(id, userId).map(this::mapResponse)
                 .orElseThrow(() -> new IllegalStateException("Account " + id + " not found"));
     }
 
-    public AccountResponse createAccount(CreateAccountRequest createAccountRequest) {
-        AppUser appUser = appUserRepository.findById(createAccountRequest.appUserId())
-                .orElseThrow(() -> new IllegalStateException("User " + createAccountRequest.appUserId() + " not found"));
+    public AccountResponse createAccount(Long userId, CreateAccountRequest createAccountRequest) {
+        AppUser appUser = appUserRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException("User " + userId + " not found"));
 
         Account account = new Account(
                 null,
@@ -42,37 +42,27 @@ public class AccountService {
         return mapResponse(savedAccount);
     }
 
-    public void deleteAccount(Long id) {
-        Account account = accountRepository.findById(id)
+    public void deleteAccount(Long id, Long userId) {
+        Account account = accountRepository.findByIdAndAppUserId(id, userId)
                 .orElseThrow(() -> new IllegalStateException("Account " + id + " not found"));
 
         accountRepository.delete(account);
     }
 
-    public AccountResponse updateAccount(Long id, UpdateAccountRequest updateAccountRequest) {
-        AppUser appUser = appUserRepository.findById(updateAccountRequest.appUserId())
-                .orElseThrow(() -> new IllegalStateException("User " + updateAccountRequest.appUserId() + " not found"));
+    public AccountResponse updateAccount(Long id, UpdateAccountRequest updateAccountRequest, Long userId) {
+        appUserRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException("User " + userId + " not found"));
 
-        Account account = accountRepository.findById(id)
+        Account account = accountRepository.findByIdAndAppUserId(id, userId)
                 .orElseThrow(() -> new IllegalStateException("Account " + id + " not found"));
 
         account.setName(updateAccountRequest.name());
         account.setType(updateAccountRequest.type());
         account.setBalance(updateAccountRequest.balance());
-        account.setAppUser(appUser);
 
         Account savedAccount = accountRepository.save(account);
 
         return mapResponse(savedAccount);
-    }
-
-    public List<AccountResponse> findByAppUserId(Long appUserId) {
-        if (!appUserRepository.existsById(appUserId)) {
-            throw new IllegalStateException("User " + appUserId + " not found");
-        }
-
-        return accountRepository.findByAppUserId(appUserId).stream()
-                .map(this::mapResponse).toList();
     }
 
     private AccountResponse mapResponse(Account account) {

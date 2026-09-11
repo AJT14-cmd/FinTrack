@@ -63,7 +63,7 @@ class TransactionServiceTest {
 
         prepareCreate(category, account);
 
-        transactionService.insertTransaction(request);
+        transactionService.insertTransaction(request, USER_ID);
 
         assertEquals(money("125.00"), account.getBalance());
         verify(accountRepository).save(account);
@@ -84,7 +84,7 @@ class TransactionServiceTest {
 
         prepareCreate(category, account);
 
-        transactionService.insertTransaction(request);
+        transactionService.insertTransaction(request, USER_ID);
 
         assertEquals(money("75.00"), account.getBalance());
         verify(accountRepository).save(account);
@@ -95,9 +95,10 @@ class TransactionServiceTest {
     void deletingIncomeReversesBalance() {
         Account account = account(ACCOUNT_ID, "125.00");
         Transaction transaction = transaction(account, "25.00", TransactionType.INCOME);
-        when(transactionRepository.findById(TRANSACTION_ID)).thenReturn(Optional.of(transaction));
+        when(transactionRepository.findByIdAndAccountAppUserId(TRANSACTION_ID, USER_ID))
+                .thenReturn(Optional.of(transaction));
 
-        transactionService.deleteTransaction(TRANSACTION_ID);
+        transactionService.deleteTransaction(TRANSACTION_ID, USER_ID);
 
         assertEquals(money("100.00"), account.getBalance());
         verify(accountRepository).save(account);
@@ -108,9 +109,10 @@ class TransactionServiceTest {
     void deletingExpenseReversesBalance() {
         Account account = account(ACCOUNT_ID, "75.00");
         Transaction transaction = transaction(account, "25.00", TransactionType.EXPENSE);
-        when(transactionRepository.findById(TRANSACTION_ID)).thenReturn(Optional.of(transaction));
+        when(transactionRepository.findByIdAndAccountAppUserId(TRANSACTION_ID, USER_ID))
+                .thenReturn(Optional.of(transaction));
 
-        transactionService.deleteTransaction(TRANSACTION_ID);
+        transactionService.deleteTransaction(TRANSACTION_ID, USER_ID);
 
         assertEquals(money("100.00"), account.getBalance());
         verify(accountRepository).save(account);
@@ -132,7 +134,7 @@ class TransactionServiceTest {
 
         prepareUpdate(category, account, transaction);
 
-        TransactionResponse response = transactionService.updateTransaction(TRANSACTION_ID, request);
+        TransactionResponse response = transactionService.updateTransaction(TRANSACTION_ID, request, USER_ID);
 
         assertAll(
                 () -> assertEquals(money("65.00"), account.getBalance()),
@@ -158,11 +160,12 @@ class TransactionServiceTest {
         );
 
         when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(category));
-        when(accountRepository.findById(newAccountId)).thenReturn(Optional.of(newAccount));
-        when(transactionRepository.findById(TRANSACTION_ID)).thenReturn(Optional.of(transaction));
+        when(accountRepository.findByIdAndAppUserId(newAccountId, USER_ID)).thenReturn(Optional.of(newAccount));
+        when(transactionRepository.findByIdAndAccountAppUserId(TRANSACTION_ID, USER_ID))
+                .thenReturn(Optional.of(transaction));
         when(transactionRepository.save(transaction)).thenReturn(transaction);
 
-        transactionService.updateTransaction(TRANSACTION_ID, request);
+        transactionService.updateTransaction(TRANSACTION_ID, request, USER_ID);
 
         assertAll(
                 () -> assertEquals(money("100.00"), oldAccount.getBalance()),
@@ -188,7 +191,7 @@ class TransactionServiceTest {
 
         prepareUpdate(category, account, transaction);
 
-        transactionService.updateTransaction(TRANSACTION_ID, request);
+        transactionService.updateTransaction(TRANSACTION_ID, request, USER_ID);
 
         assertAll(
                 () -> assertEquals(money("130.00"), account.getBalance()),
@@ -212,7 +215,7 @@ class TransactionServiceTest {
 
         prepareUpdate(category, account, transaction);
 
-        transactionService.updateTransaction(TRANSACTION_ID, request);
+        transactionService.updateTransaction(TRANSACTION_ID, request, USER_ID);
 
         assertAll(
                 () -> assertEquals(money("70.00"), account.getBalance()),
@@ -237,12 +240,13 @@ class TransactionServiceTest {
         );
 
         when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(category));
-        when(accountRepository.findById(newAccountId)).thenReturn(Optional.of(newAccount));
-        when(transactionRepository.findById(TRANSACTION_ID)).thenReturn(Optional.of(transaction));
+        when(accountRepository.findByIdAndAppUserId(newAccountId, USER_ID)).thenReturn(Optional.of(newAccount));
+        when(transactionRepository.findByIdAndAccountAppUserId(TRANSACTION_ID, USER_ID))
+                .thenReturn(Optional.of(transaction));
 
         IllegalStateException exception = assertThrows(
                 IllegalStateException.class,
-                () -> transactionService.updateTransaction(TRANSACTION_ID, request)
+                () -> transactionService.updateTransaction(TRANSACTION_ID, request, USER_ID)
         );
 
         assertAll(
@@ -257,15 +261,16 @@ class TransactionServiceTest {
 
     private void prepareCreate(Category category, Account account) {
         when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(category));
-        when(accountRepository.findById(ACCOUNT_ID)).thenReturn(Optional.of(account));
+        when(accountRepository.findByIdAndAppUserId(ACCOUNT_ID, USER_ID)).thenReturn(Optional.of(account));
         when(transactionRepository.save(any(Transaction.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     private void prepareUpdate(Category category, Account account, Transaction transaction) {
         when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(category));
-        when(accountRepository.findById(ACCOUNT_ID)).thenReturn(Optional.of(account));
-        when(transactionRepository.findById(TRANSACTION_ID)).thenReturn(Optional.of(transaction));
+        when(accountRepository.findByIdAndAppUserId(ACCOUNT_ID, USER_ID)).thenReturn(Optional.of(account));
+        when(transactionRepository.findByIdAndAccountAppUserId(TRANSACTION_ID, USER_ID))
+                .thenReturn(Optional.of(transaction));
         when(transactionRepository.save(transaction)).thenReturn(transaction);
     }
 
