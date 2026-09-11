@@ -18,7 +18,7 @@ This project was built to learn backend application development with Java and Sp
 - Retrieve accounts, transactions, and budgets for the authenticated user
 - Generate user-scoped monthly summaries, budget statuses, and account balance reports
 - Validate incoming request data and return centralized error responses
-- Test transaction balance rules with JUnit and Mockito
+- Test transaction balance rules and authentication boundaries with JUnit, Mockito, MockMvc, and H2
 
 ## Tech Stack
 
