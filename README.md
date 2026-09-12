@@ -18,6 +18,7 @@ This project was built to learn backend application development with Java and Sp
 - Retrieve accounts, transactions, and budgets for the authenticated user
 - Generate user-scoped monthly summaries, budget statuses, and account balance reports
 - Validate incoming request data and return centralized error responses
+- Explore and test the API through OpenAPI documentation and Swagger UI
 - Test transaction balance rules and authentication boundaries with JUnit, Mockito, MockMvc, and H2
 
 ## Tech Stack
@@ -32,6 +33,7 @@ This project was built to learn backend application development with Java and Sp
 | Jakarta Validation | Request validation |
 | Spring Security | Password hashing and endpoint protection |
 | OAuth2 Resource Server | JWT creation and validation |
+| Springdoc OpenAPI | Interactive API documentation and Swagger UI |
 | PostgreSQL | Relational database |
 | Flyway | Versioned database schema migrations |
 | Docker Compose | Local PostgreSQL environment |
@@ -76,6 +78,22 @@ The application runs at `http://localhost:8080` by default.
 Supported account types are `CHECKING`, `SAVINGS`, `CREDIT_CARD`, `CASH`, and `INVESTMENT_ACCOUNT`. Transaction and category types are `INCOME` and `EXPENSE`.
 
 The registration and login endpoints are public. Every other endpoint requires an `Authorization: Bearer <token>` header. Account, transaction, budget, and report endpoints derive the current user from the signed token rather than accepting a user ID from the client. Category ownership is still a planned decision.
+
+## Interactive API Documentation
+
+After starting the application, open:
+
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+
+Swagger UI describes the request bodies, response codes, and authentication requirements for the API. To test a protected endpoint:
+
+1. Use `POST /api/auth/register` to create a user.
+2. Use `POST /api/auth/login` and copy the `token` value from the response.
+3. Select **Authorize** at the top of Swagger UI and paste the token without adding the `Bearer` prefix.
+4. Call a protected endpoint such as `GET /api/users/me`.
+
+Swagger UI automatically sends the token in the `Authorization: Bearer <token>` header. Common `400`, `401`, `404`, and `409` responses are included in the endpoint documentation.
 
 ## API Examples
 
@@ -305,6 +323,8 @@ On macOS or Linux:
 
 Tests use the `test` Spring profile and an in-memory H2 database. Flyway builds the H2 schema from the same migrations and Hibernate validates it before tests run. The suite does not connect to or modify the development PostgreSQL database.
 
+The test suite also verifies that the OpenAPI specification exposes JWT Bearer authentication, documents key error responses, leaves authentication endpoints public, and serves Swagger UI successfully.
+
 ## What I Learned
 
 Building FinTrack gave me practical experience with:
@@ -321,6 +341,7 @@ Building FinTrack gave me practical experience with:
 - Protecting database credentials from source control
 - Hashing passwords with BCrypt and authenticating stateless requests with JWTs
 - Managing schema changes with versioned Flyway migrations
+- Documenting and testing secured REST endpoints with OpenAPI and Swagger UI
 
 ## Planned Features
 
@@ -329,7 +350,6 @@ Building FinTrack gave me practical experience with:
 - Complete ownership tests for authenticated account, transaction, budget, and report operations
 - Make categories user-owned and remove unrestricted collection endpoints
 - Add transaction filtering, sorting, pagination, and custom date ranges
-- Publish interactive API documentation with OpenAPI and Swagger UI
 - Add recurring transactions, savings goals, and spending trend reports
 - Build a frontend dashboard for accounts, budgets, transactions, and reports
 - Add CI checks and deploy the application
