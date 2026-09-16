@@ -6,12 +6,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("api/transactions")
@@ -30,8 +35,47 @@ public class TransactionController {
             @ApiResponse(responseCode = "401", description = "Missing or invalid token")
     })
     @GetMapping
-    public List<TransactionResponse> getTransactions(@AuthenticationPrincipal Jwt jwt) {
-        return transactionService.getAllTransactions(Long.valueOf(jwt.getSubject()));
+    public TransactionPageResponse getTransactions(@AuthenticationPrincipal Jwt jwt,
+                                                     @RequestParam(defaultValue = "0") int page,
+                                                     @RequestParam(defaultValue = "20") int size,
+                                                     @RequestParam(defaultValue = "transactionDateTime") String sortBy,
+                                                     @RequestParam(defaultValue = "desc") String direction) {
+        if (page < 0) {
+            throw new IllegalArgumentException("Page cannot be negative");
+        }
+
+        if ((long) page * size > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Page offset is too large");
+        }
+
+        if (size < 1 || size > 100) {
+            throw new IllegalArgumentException("Size must be between 1 and 100");
+        }
+
+        Set<String> allowedSortFields = Set.of("transactionDateTime", "amount", "id");
+
+        if (!allowedSortFields.contains(sortBy)) {
+            throw new IllegalArgumentException("Unsupported sort field: " + sortBy);
+        }
+
+        if (!direction.equalsIgnoreCase("asc") && !direction.equalsIgnoreCase("desc")) {
+            throw new IllegalArgumentException("Sorting direction must be either asc or desc");
+        }
+
+        Sort.Direction sortDirection = Sort.Direction.fromString(direction);
+        Sort sort = Sort.by(sortDirection, sortBy).and(Sort.by(Sort.Direction.DESC, "id"));
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<TransactionResponse> result = transactionService
+                .getAllTransactions(Long.valueOf(jwt.getSubject()), pageable);
+
+        return new TransactionPageResponse(
+                result.getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages()
+        );
     }
 
     @Operation(summary = "Get a transaction")

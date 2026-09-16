@@ -99,7 +99,8 @@ class CategorySecurityIntegrationTest {
                 .andExpect(status().isNotFound());
         mockMvc.perform(get("/api/transactions").header("Authorization", aliceToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0));
         assertBalance(1000);
     }
 
@@ -119,7 +120,9 @@ class CategorySecurityIntegrationTest {
                 .andExpect(jsonPath("$.amount").value(25.0));
         mockMvc.perform(get("/api/transactions").header("Authorization", aliceToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(id))
+                .andExpect(jsonPath("$.totalElements").value(1));
         assertBalance(975);
     }
 

@@ -1,6 +1,8 @@
 package com.ajthapa.transaction;
 import com.ajthapa.account.Account;
 import com.ajthapa.account.AccountRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,8 +24,8 @@ public class TransactionService {
         this.accountRepository = accountRepository;
     }
 
-    public List<TransactionResponse> getAllTransactions(Long userId) {
-        return transactionRepository.findByAccountAppUserId(userId).stream().map(this::mapResponse).toList();
+    public Page<TransactionResponse> getAllTransactions(Long userId, Pageable pageable) {
+        return transactionRepository.findByAccountAppUserId(userId, pageable).map(this::mapResponse);
     }
 
     public TransactionResponse getTransactionById(Long id, Long userId) {

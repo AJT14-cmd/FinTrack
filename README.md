@@ -13,6 +13,7 @@ This project was built to learn backend application development with Java and Sp
 - Create, read, update, and delete financial accounts
 - Create, read, update, and delete user-owned income and expense categories
 - Create, read, update, and delete transactions
+- Browse transactions with pagination and sorting by date, amount, or ID
 - Automatically update account balances when transactions change
 - Create and manage monthly category budgets
 - Retrieve accounts, transactions, and budgets for the authenticated user
@@ -215,6 +216,60 @@ GET http://localhost:8080/api/reports/account-balances
 Authorization: Bearer {{token}}
 ```
 
+### 9. Browse transactions
+
+```http
+GET http://localhost:8080/api/transactions?page=0&size=20&sortBy=amount&direction=asc
+Authorization: Bearer {{token}}
+```
+
+| Parameter | Default | Allowed values |
+| --- | --- | --- |
+| `page` | `0` | Nonnegative integer; pages are zero-based |
+| `size` | `20` | Integer from `1` through `100` |
+| `sortBy` | `transactionDateTime` | `transactionDateTime`, `amount`, `id` (case-sensitive) |
+| `direction` | `desc` | `asc` or `desc` (case-insensitive) |
+
+The default order is newest first, with descending ID used to break ties.
+When sorting by amount or date, ties also use descending ID regardless of the
+primary direction. Use separate `sortBy` and `direction` parameters rather than
+`sort=amount,asc`.
+
+The response is a page object, not a plain array. For example, a user with one
+transaction could receive:
+
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "categoryId": 1,
+      "categoryName": "Groceries",
+      "accountId": 1,
+      "description": "Weekly groceries",
+      "amount": 75.50,
+      "type": "EXPENSE",
+      "transactionDateTime": "2026-09-15T12:00:00"
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 1,
+  "totalPages": 1
+}
+```
+
+`size` is the requested page capacity; `content` can contain fewer items.
+Both content and totals include only the authenticated user's transactions.
+An out-of-range page returns `200` with empty content and the actual totals.
+A user with no transactions receives zero total elements and zero total pages.
+
+Invalid page sizes, negative pages, unsupported sort fields or directions, and
+malformed numeric parameters return `400`. The offset (`page * size`) cannot
+exceed `2147483647`. A missing or invalid token returns `401`.
+
+Filtering by account, category, transaction type, or date range is not implemented yet.
+
 ## Running Locally
 
 ### Prerequisites
@@ -333,6 +388,11 @@ Category security tests use real login tokens to verify isolated category lists,
 
 The test suite also verifies that the OpenAPI specification exposes JWT Bearer authentication, documents key error responses, leaves authentication endpoints public, and serves Swagger UI successfully.
 
+Transaction pagination tests cover defaults, consecutive and out-of-range pages,
+empty results, page-size limits, each supported sort field, deterministic tie
+ordering, invalid parameters, and authenticated-user isolation of both results
+and totals. These tests use fixed timestamps for repeatable ordering checks.
+
 ## What I Learned
 
 Building FinTrack gave me practical experience with:
@@ -356,7 +416,7 @@ Building FinTrack gave me practical experience with:
 - Add PostgreSQL Testcontainers coverage for database migrations
 - Expand unit, repository, and controller test coverage
 - Complete ownership tests for authenticated account, transaction, budget, and report operations
-- Add transaction filtering, sorting, pagination, and custom date ranges
+- Add transaction filtering by account, category, type, and custom date ranges
 - Add recurring transactions, savings goals, and spending trend reports
 - Build a frontend dashboard for accounts, budgets, transactions, and reports
 - Add CI checks and deploy the application
