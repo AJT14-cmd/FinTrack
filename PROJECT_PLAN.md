@@ -1,523 +1,221 @@
-# PocketLedger Project Plan
+# FinTrack Project Plan
 
-This project is designed for someone who knows Java but is new to application development and Spring Boot.
+Updated: September 15, 2026
 
-The goal is to build a small but real personal finance tracking backend. You will learn how Java code becomes an application that accepts requests, stores data, follows a clean structure, and can eventually be polished for a resume.
+## Vision
 
-## What You Are Building
+Build a personal finance application for everyday use and as a resume project.
+Users can register, manage accounts, record income and expenses, set monthly
+budgets, and understand spending through reports.
 
-You are building a backend application called **PocketLedger**.
+The first complete release uses manually entered financial data. Bank
+synchronization is a later exploration, not a requirement for finishing v1.
+Complete one milestone at a time and learn the concepts as you implement them.
 
-A backend application handles:
+## Current Position
 
-- Data
-- Business rules
-- Users
-- Security
-- Databases
-- API requests
+The core backend is implemented. Authentication, migrations, and API
+documentation are already present.
 
-For example, if someone uses a finance app and clicks "Add expense," the backend receives that request and saves the expense.
+Completed foundations:
 
-At first, this app will not have buttons or pages. You will interact with it using a browser, Postman, Insomnia, or another API testing tool. That is normal for backend development.
+- [x] Spring Boot REST API with feature packages, controllers, services, repositories, and DTOs.
+- [x] PostgreSQL persistence through Spring Data JPA and Hibernate.
+- [x] Account, category, transaction, and budget CRUD operations.
+- [x] Automatic balance updates when transactions are created, edited, deleted, or moved.
+- [x] Monthly summaries, category spending, budget status, and account balance reports.
+- [x] Request validation and centralized error responses.
+- [x] BCrypt registration, JWT login, and the current-user endpoint.
+- [x] Authenticated-user scoping for accounts, transactions, budgets, and reports.
+- [x] Tests covering financial calculations and authentication/authorization behavior.
+- [x] Isolated H2 test configuration.
+- [x] Flyway migrations and Hibernate schema validation.
+- [x] OpenAPI documentation and Swagger UI.
+- [x] README and Docker Compose setup for PostgreSQL.
 
-## The Simplest Version
+The backend provides substantial resume material. Category ownership is the
+next gap to close before preparing a usable frontend.
 
-The first version should do only this:
+## Milestone 1: User-Owned Categories
 
-```text
-Let someone save and view transactions.
-```
+Status: Next task.
 
-A transaction is one money event:
+Categories currently have no owner and use unrestricted repository queries.
+Authenticated users can access and modify shared categories.
 
-```text
-Coffee: $4.50 expense
-Paycheck: $2000 income
-Rent: $1200 expense
-```
-
-Start small. The first version does not need login, a database, Docker, deployment, or a frontend.
-
-## Big Picture
-
-A typical Spring Boot backend is organized like this:
-
-```text
-Controller -> Service -> Repository -> Database
-```
-
-For now, think of it like this:
-
-```text
-Controller = receives the request
-Service = decides what should happen
-Repository = saves or loads data
-Database = stores data permanently
-```
-
-At the very beginning, you will skip the repository and database. Instead, you will store transactions temporarily in memory using Java collections.
-
-## Stage 1: Run A Spring Boot App
+Goal: Each user manages only their own categories. Their transactions and
+budgets can reference only categories they own.
 
 ### Learn
 
-- What a Spring Boot project looks like
-- How to start the app
-- What a local server is
-- What `localhost` means
-- How to open an endpoint in the browser
+- Many-to-one relationships: many categories belong to one user.
+- Authentication identifies the caller; authorization limits access.
+- Ownership must be checked for related resources as well as direct endpoints.
+- Schema migrations must account for existing data.
 
 ### Build
 
-```text
-GET /api/health
+1. Add an AppUser relationship to Category, following the account ownership pattern.
+2. Add a new migration such as V2__add_category_ownership.sql with an owner column,
+   foreign key, and suitable lookup index. Do not edit already-applied V1.
+3. Plan how existing categories acquire owners before enforcing NOT NULL.
+4. Add repository methods findAllByAppUserId and findByIdAndAppUserId.
+5. Pass the authenticated user's identity through the controller/service flow,
+   following the existing account implementation. Do not trust an owner ID from the request body.
+6. Scope category list, read, create, update, and delete operations to that user.
+7. Resolve categories by both ID and owner when creating or updating transactions and budgets.
+8. Return 404 for missing or other-user categories, consistent with existing ownership behavior.
+9. Update affected test fixtures, Swagger descriptions, and README examples.
+
+### Existing Data
+
+Do not assign all categories to an arbitrary user. A shared category may be
+referenced by multiple users' transactions or budgets. To preserve data, plan
+how to copy categories per owner and reconnect references before making
+ownership mandatory.
+
+A fresh development database is an option only if the existing data is
+explicitly disposable. Resetting a Docker volume deletes that data and is not
+required by this plan. Testing an empty database alone does not verify a
+migration against populated data.
+
+### Completion Checks
+
+- [ ] New categories belong to the authenticated user.
+- [ ] Lists contain only the user's categories.
+- [ ] User A cannot read, edit, or delete User B's category.
+- [ ] Transactions and budgets reject another user's category on create and update.
+- [ ] Rejected requests leave balances and stored data unchanged.
+- [ ] Missing and other-user categories produce the expected 404 responses.
+- [ ] Migrations work with the chosen existing-data strategy.
+- [ ] The complete test suite passes.
+
+## Milestone 2: Transaction Filtering, Sorting, And Pagination
+
+Status: Planned after category ownership.
+
+Goal: Find transactions without downloading the entire history.
+
+Learn query parameters, Spring Data pagination, and combining query conditions.
+
+1. Add pagination with a default and maximum page size.
+2. Add predictable sorting with an ID tie-breaker when dates match.
+3. Add account, category, type, and date-range filters.
+4. Validate dates, pagination values, and supported sorting fields.
+5. Preserve user ownership restrictions in every query.
+6. Document parameters and the paginated response in OpenAPI.
+
+Example planned request:
+
+```http
+GET /api/transactions?page=0&size=20&type=EXPENSE&sort=transactionDateTime,desc
 ```
 
-Example response:
+Completion: Filters and pagination work together, invalid inputs produce clear
+errors, and no filter combination exposes another user's transactions.
 
-```text
-PocketLedger is running
-```
+## Milestone 3: Continuous Integration
 
-### Why This Matters
+Status: Planned.
 
-This proves your application is alive and able to respond to web requests.
+Goal: GitHub runs the build and tests automatically on pushes and pull requests.
 
-## Stage 2: Create Your First API Endpoint
+- [ ] Add GitHub Actions using the project's Java version and Maven Wrapper.
+- [ ] Run the full test suite with the isolated test profile.
+- [ ] Require no development database credentials or personal JWT secret.
+- [ ] Preserve test reports when a run fails.
+- [ ] Verify the workflow succeeds from a clean checkout.
 
-### Learn
+Completion: A failing test fails the workflow and a clean checkout builds successfully.
 
-- What HTTP is
-- What `GET` means
-- What a controller is
-- How Java methods can respond to web requests
+## Milestone 4: PostgreSQL Integration Tests
 
-### Build
+Status: Planned.
 
-```text
-GET /api/hello
-```
+Testcontainers starts temporary PostgreSQL containers for tests. Keep fast
+unit/H2 tests and add focused coverage against the actual database engine.
 
-Example response:
+- [ ] Configure an isolated PostgreSQL Testcontainer.
+- [ ] Verify Flyway builds a fresh database and Hibernate validates it.
+- [ ] Test populated-data upgrades supported by the migration strategy.
+- [ ] Test ownership queries and important database constraints.
+- [ ] Include representative transaction/balance persistence checks.
+- [ ] Run these tests in CI with Docker available.
 
-```json
-{
-  "message": "Hello from PocketLedger"
-}
-```
+Completion: PostgreSQL behavior is verified without accessing the development database.
 
-### Why This Matters
+## Milestone 5: First Usable Frontend
 
-This is the first step from writing a Java program to building a web application.
+Status: Planned after the preceding backend milestones.
 
-## Stage 3: Create A Transaction Model
-
-### Learn
-
-- How to represent application data using Java classes
-- Why applications have models
-- How JSON maps to Java objects
-
-### Build
-
-A Java class representing a transaction:
-
-```java
-public class Transaction {
-    private Long id;
-    private String description;
-    private BigDecimal amount;
-    private String type;
-}
-```
-
-Example JSON:
-
-```json
-{
-  "id": 1,
-  "description": "Coffee",
-  "amount": 4.50,
-  "type": "EXPENSE"
-}
-```
-
-### Why This Matters
-
-Real applications are built around data models.
-
-## Stage 4: Save Transactions In Memory
-
-### Learn
-
-- How to store application data while the app is running
-- Why in-memory storage is temporary
-- How services contain business logic
-
-### Build
-
-```text
-POST /api/transactions
-GET /api/transactions
-GET /api/transactions/{id}
-DELETE /api/transactions/{id}
-```
-
-These endpoints allow you to:
-
-- Create a transaction
-- View all transactions
-- View one transaction
-- Delete a transaction
-
-For now, the app can store transactions in a Java `Map`.
-
-When the app stops, the data disappears. That is okay for this stage.
-
-## Stage 5: Organize The App Properly
-
-### Learn
-
-Common application folders:
+Goal: Complete this workflow in a browser:
 
 ```text
-controller
-service
-model
-dto
-exception
+Register -> Log in -> Create account -> Create category
+-> Add expense -> See updated balance -> Review monthly spending
 ```
 
-What they mean:
+Learn basic HTML, CSS, JavaScript, forms, and HTTP requests if those are new.
+Choose a framework after understanding these fundamentals.
 
-```text
-controller = receives web requests
-service = contains business rules
-model = represents app data
-dto = request and response shapes
-exception = handles errors
-```
+Build screens in this order:
 
-### Why This Matters
+1. Registration and login.
+2. Current-user loading and authenticated navigation.
+3. Account listing and creation.
+4. Category management.
+5. Transaction list with filters, pagination, and create/edit/delete forms.
+6. Monthly budgets and spending status.
+7. Monthly summary and account balance dashboard.
 
-This is how you keep the application from becoming messy as it grows.
+Plan token handling and expiration behavior before connecting login. Configure
+CORS for the actual frontend origin if it runs separately from the backend.
 
-## Stage 6: Add Validation
+Handle loading, empty results, validation errors, server errors, and expired
+authentication. Confirm destructive deletions.
 
-### Learn
+Completion: The workflow works on desktop and mobile without Swagger or an HTTP client.
 
-- How to reject bad input
-- Why real applications cannot trust user input
-- How validation protects your app from invalid data
+## Milestone 6: Deploy And Polish v1
 
-This request should fail:
+Status: Planned.
 
-```json
-{
-  "description": "",
-  "amount": -10,
-  "type": "EXPENSE"
-}
-```
+- [ ] Deploy backend, frontend, and PostgreSQL.
+- [ ] Configure production secrets outside source control.
+- [ ] Use HTTPS and the correct frontend/API origins.
+- [ ] Establish database backups and verify a restore.
+- [ ] Verify migrations and the main workflow in the deployed environment.
+- [ ] Update setup instructions, screenshots, API links, and architecture notes.
+- [ ] Provide a demo with fictional financial data.
+- [ ] Document limitations and tag a v1 release.
 
-Rules:
+## Definition Of Finished
 
-```text
-Description cannot be blank
-Amount must be greater than zero
-Type must be INCOME or EXPENSE
-```
+FinTrack v1 is finished when users can register, manage their own accounts,
+categories, transactions, and budgets, and view accurate reports through a
+usable frontend. Other users' data must remain inaccessible.
 
-## Stage 7: Add A Database
+A reviewer should be able to follow the README, run the project from a clean
+checkout, explore the API documentation, and see passing automated checks.
+Deployment and a documented backup/restore process complete the personal-use release.
 
-Only add PostgreSQL after the basic API makes sense.
+The backend can be presented on a resume now with an accurate description of
+implemented features. Finishing v1 does not require every future idea below.
 
-### Learn
+## Later Enhancements
 
-- What a database is
-- What a table is
-- What an entity is
-- What Spring Data JPA does
-- What a repository is
+- Recurring transactions.
+- Savings goals and spending trends.
+- CSV import/export.
+- Read-only bank synchronization, subject to provider access and data freshness.
+- Additional account recovery and session-management features as usage grows.
 
-### Build
+## Working Routine
 
-A transaction table that stores:
-
-```text
-id
-description
-amount
-type
-transaction_date
-created_at
-```
-
-### Why This Matters
-
-Now your data survives after the application stops.
-
-## Stage 8: Add Categories
-
-### Learn
-
-- How different pieces of data relate to each other
-- How one transaction can belong to one category
-- How to model relationships in an application
-
-Example categories:
-
-```text
-Food
-Rent
-Transportation
-Salary
-Entertainment
-```
-
-Example relationships:
-
-```text
-Coffee -> Food
-Paycheck -> Salary
-Rent -> Rent
-```
-
-### Why This Matters
-
-Applications are usually relationships between objects, not just one object by itself.
-
-## Stage 9: Add Reports
-
-### Learn
-
-- How to write business logic
-- How to calculate useful values from stored data
-- How reporting endpoints work
-
-### Build
-
-```text
-GET /api/reports/monthly-summary
-```
-
-Example response:
-
-```json
-{
-  "totalIncome": 3000,
-  "totalExpenses": 1800,
-  "netSavings": 1200
-}
-```
-
-### Why This Matters
-
-This makes the app more than basic create, read, update, and delete operations.
-
-## Stage 10: Add Budgets
-
-### Learn
-
-- How to build a feature an actual user would care about
-- How to compare budget limits against spending totals
-- How to return calculated status values
-
-### Build
-
-Example budgets:
-
-```text
-Food budget: $400/month
-Entertainment budget: $100/month
-```
-
-Example result:
-
-```text
-You spent $375 of your $400 Food budget.
-```
-
-## Stage 11: Add Login Later
-
-Authentication is important, but it is not beginner-friendly as a starting point.
-
-Add this only after the basic app works.
-
-### Learn
-
-- Registering users
-- Logging in
-- Password hashing
-- JWT tokens
-- User-specific transactions
-
-### Build
-
-```text
-POST /api/auth/register
-POST /api/auth/login
-GET /api/users/me
-```
-
-## First Week Goal
-
-Focus only on this:
-
-```text
-1. Create the Spring Boot project.
-2. Run it locally.
-3. Make /api/health return a message.
-4. Make /api/transactions return an empty list.
-5. Make POST /api/transactions save a transaction in memory.
-```
-
-Do not worry about:
-
-- Databases
-- Login
-- Docker
-- Deployment
-- Fancy frontend
-- Microservices
-- Cloud hosting
-
-Those come later.
-
-## First Mental Model
-
-Remember this:
-
-```text
-A Java class can become a web endpoint.
-A web endpoint receives a request.
-A request can contain JSON.
-Spring Boot turns that JSON into Java objects.
-Your Java code does something with those objects.
-Spring Boot turns your Java response back into JSON.
-```
-
-That is the main idea. Once you understand that, Spring Boot becomes much less intimidating.
-
-## Recommended First Build
-
-Build this exact version first:
-
-```text
-PocketLedger v0.1
-
-Features:
-- App starts
-- GET /api/health returns "OK"
-- GET /api/transactions returns all saved transactions
-- POST /api/transactions creates a transaction
-- Data is stored in memory
-```
-
-When this works, you will have crossed an important line: you will no longer just know Java syntax. You will have built the beginning of a real application.
-
-## Resume-Ready Finish Line
-
-The project is polished enough for a resume when someone can:
-
-```text
-1. Clone the repository.
-2. Run the app locally.
-3. Open the API documentation.
-4. Add transactions and categories.
-5. View a monthly financial summary.
-6. Understand the project from the README.
-```
-
-Later polish features:
-
-- PostgreSQL database
-- Spring Data JPA
-- Validation
-- Error handling
-- Swagger/OpenAPI documentation
-- Tests
-- Docker
-- Deployment
-- Authentication
-
-## Current Next Phase: Authentication Before Frontend
-
-FinTrack now has users, accounts, categories, transactions, budgets, reports, PostgreSQL integration, Docker configuration, validation, error handling, and initial service tests.
-
-The next major feature should be authentication, followed by the frontend.
-
-The API currently accepts `userId` values from clients. A client could change that value and request another user's financial data. Authentication establishes which user made a request, while authorization ensures that user can access only their own data.
-
-```text
-Authentication = Who are you?
-Authorization = Are you allowed to access this data?
-```
-
-### Phase 1: Stabilize the Backend
-
-- Create an isolated test configuration that never uses the development database.
-- Manage schema changes with Flyway migrations and keep Hibernate in `validate` mode.
-- Add service tests for report calculations and ownership checks.
-- Add controller tests for validation and HTTP status codes.
-
-### Phase 2: Add Authentication
-
-- Add a password field to `AppUser` without exposing it in response DTOs.
-- Hash passwords with BCrypt instead of storing plain-text passwords.
-- Add registration and login endpoints.
-- Learn the Spring Security filter chain and authenticated principal.
-- Use JWT authentication if the frontend will run as a separate application.
-
-Planned endpoints:
-
-```text
-POST /api/auth/register
-POST /api/auth/login
-GET  /api/users/me
-```
-
-### Phase 3: Add Authorization
-
-- Read the current user's identity from Spring Security.
-- Stop trusting `userId` values supplied by clients.
-- Verify ownership when reading, updating, or deleting accounts, transactions, and budgets.
-- Scope all financial reports to the authenticated user.
-- Return `403 Forbidden` when an authenticated user tries to access another user's data.
-
-For example, replace:
-
-```text
-GET /api/reports/account-balances?userId=1
-```
-
-with:
-
-```text
-GET /api/reports/account-balances
-```
-
-Spring Security will determine the user instead of trusting an ID from the request.
-
-### Phase 4: Build the Frontend
-
-Build the frontend after the authentication and authorization contract is stable.
-
-Start with these screens:
-
-- Registration and login
-- Account overview
-- Transaction list and transaction form
-- Budget tracking
-- Monthly summary dashboard
-
-### Next Milestone
-
-The immediate milestone is:
-
-```text
-A user can register, log in, and retrieve their own accounts without supplying a userId.
-```
-
-Once this works, the frontend will have a secure API to build against.
+1. Define expected behavior with concrete examples.
+2. Implement one small workflow through controller, service, and repository.
+3. Test business rules, ownership boundaries, and failure cases.
+4. Run relevant checks and the full suite before completing the milestone.
+5. Update README and OpenAPI documentation when behavior changes.
+6. Review the diff for mistakes and secrets, then commit and push when ready.
+7. Mark a milestone complete only when its completion checks pass.

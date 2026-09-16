@@ -33,7 +33,7 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponse insertTransaction(CreateTransactionRequest createTransactionRequest, Long userId) {
-        Category category = categoryRepository.findById(createTransactionRequest.categoryId())
+        Category category = categoryRepository.findByIdAndAppUserId(createTransactionRequest.categoryId(), userId)
                 .orElseThrow(() -> new IllegalStateException("Category " + createTransactionRequest.categoryId() + " not found"));
 
         Account account = accountRepository.findByIdAndAppUserId(createTransactionRequest.accountId(), userId)
@@ -82,7 +82,7 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponse updateTransaction(Long id, UpdateTransactionRequest updateTransactionRequest, Long userId) {
-        Category category = categoryRepository.findById(updateTransactionRequest.categoryId())
+        Category category = categoryRepository.findByIdAndAppUserId(updateTransactionRequest.categoryId(), userId)
                 .orElseThrow(() -> new IllegalStateException("Category " + updateTransactionRequest.categoryId() + " not found"));
 
         Account newAccount = accountRepository.findByIdAndAppUserId(updateTransactionRequest.accountId(), userId)

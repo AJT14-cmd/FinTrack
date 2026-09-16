@@ -11,7 +11,7 @@ This project was built to learn backend application development with Java and Sp
 - Log in with email and password to receive a signed JWT
 - Require JWT authentication for all non-authentication endpoints
 - Create, read, update, and delete financial accounts
-- Create, read, update, and delete income and expense categories
+- Create, read, update, and delete user-owned income and expense categories
 - Create, read, update, and delete transactions
 - Automatically update account balances when transactions change
 - Create and manage monthly category budgets
@@ -65,8 +65,8 @@ The application runs at `http://localhost:8080` by default.
 | `GET` | `/api/users/me` | Get the authenticated user |
 | `GET`, `POST` | `/api/accounts` | List or create the authenticated user's accounts |
 | `GET`, `PUT`, `DELETE` | `/api/accounts/{id}` | Read, update, or delete an account |
-| `GET`, `POST` | `/api/categories` | List or create categories |
-| `GET`, `PUT`, `DELETE` | `/api/categories/{id}` | Read, update, or delete a category |
+| `GET`, `POST` | `/api/categories` | List or create the authenticated user's categories |
+| `GET`, `PUT`, `DELETE` | `/api/categories/{id}` | Read, update, or delete an owned category |
 | `GET`, `POST` | `/api/transactions` | List or create the authenticated user's transactions |
 | `GET`, `PUT`, `DELETE` | `/api/transactions/{id}` | Read, update, or delete a transaction |
 | `GET`, `POST` | `/api/budgets` | List or create the authenticated user's budgets |
@@ -77,7 +77,7 @@ The application runs at `http://localhost:8080` by default.
 
 Supported account types are `CHECKING`, `SAVINGS`, `CREDIT_CARD`, `CASH`, and `INVESTMENT_ACCOUNT`. Transaction and category types are `INCOME` and `EXPENSE`.
 
-The registration and login endpoints are public. Every other endpoint requires an `Authorization: Bearer <token>` header. Account, transaction, budget, and report endpoints derive the current user from the signed token rather than accepting a user ID from the client. Category ownership is still a planned decision.
+The registration and login endpoints are public. Every other endpoint requires an `Authorization: Bearer <token>` header. Account, category, transaction, budget, and report endpoints derive the current user from the signed token rather than accepting a user ID from the client. Categories belong to their creator. Transactions and budgets can only reference that user's categories, including during updates. Requests for missing or other-user categories return `404`; rejected requests leave existing records and account balances unchanged.
 
 ## Interactive API Documentation
 
@@ -97,7 +97,7 @@ Swagger UI automatically sends the token in the `Authorization: Bearer <token>` 
 
 ## API Examples
 
-These examples use the HTTP request format supported by IntelliJ IDEA, VS Code REST Client, and similar API tools. Replace example IDs with the IDs returned by your database.
+These examples use the HTTP request format supported by IntelliJ IDEA, VS Code REST Client, and similar API tools. Replace example IDs with IDs returned by requests made with the same user's token.
 
 ### 1. Register a user
 
@@ -195,6 +195,8 @@ Authorization: Bearer {{token}}
   "limitAmount": 400.00
 }
 ```
+
+Category ownership comes from the token, so do not send a user ID when creating categories. Use your own category IDs in transaction and budget requests.
 
 ### 8. View user-scoped reports
 
@@ -305,6 +307,10 @@ Flyway applies versioned migrations from `src/main/resources/db/migration` when 
 > [!WARNING]
 > A PostgreSQL database previously created by Hibernate may contain tables but no Flyway history. Back up any data you need before adopting the first migration. For disposable local data, run `docker compose down -v` once and then `docker compose up -d` to create a fresh database. The `-v` command permanently deletes the local database volume.
 
+### Category Ownership Migration
+
+`V2__add_category_ownership.sql` adds a required category owner and foreign key. It works with an empty categories table, including a fresh database. It does **not** backfill existing categories and will fail if categories already exist. For data you need to keep, back up the database and design an ownership backfill before upgrading; shared categories may need to be copied per user with transaction and budget references updated. Do not reset a database containing data you need.
+
 ## Testing
 
 Run the complete test suite:
@@ -322,6 +328,8 @@ On macOS or Linux:
 ```
 
 Tests use the `test` Spring profile and an in-memory H2 database. Flyway builds the H2 schema from the same migrations and Hibernate validates it before tests run. The suite does not connect to or modify the development PostgreSQL database.
+
+Category security tests use real login tokens to verify isolated category lists, blocked cross-user reads/updates/deletes, and rejected category references in transaction and budget creation and updates. They also verify that rejected requests preserve balances and records and that owners can manage their own categories.
 
 The test suite also verifies that the OpenAPI specification exposes JWT Bearer authentication, documents key error responses, leaves authentication endpoints public, and serves Swagger UI successfully.
 
@@ -348,7 +356,6 @@ Building FinTrack gave me practical experience with:
 - Add PostgreSQL Testcontainers coverage for database migrations
 - Expand unit, repository, and controller test coverage
 - Complete ownership tests for authenticated account, transaction, budget, and report operations
-- Make categories user-owned and remove unrestricted collection endpoints
 - Add transaction filtering, sorting, pagination, and custom date ranges
 - Add recurring transactions, savings goals, and spending trend reports
 - Build a frontend dashboard for accounts, budgets, transactions, and reports

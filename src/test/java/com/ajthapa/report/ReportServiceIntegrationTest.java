@@ -58,6 +58,8 @@ class ReportServiceIntegrationTest {
     private Account otherUserAccount;
     private Category incomeCategory;
     private Category expenseCategory;
+    private Category otherIncomeCategory;
+    private Category otherExpenseCategory;
     private YearMonth currentMonth;
 
     @BeforeEach
@@ -72,8 +74,10 @@ class ReportServiceIntegrationTest {
         otherUserAccount = accountRepository.save(new Account(
                 null, "Other Checking", AccountType.CHECKING, money("5000.00"), otherUser));
 
-        incomeCategory = categoryRepository.save(new Category(null, "Salary", CategoryType.INCOME));
-        expenseCategory = categoryRepository.save(new Category(null, "Groceries", CategoryType.EXPENSE));
+        incomeCategory = categoryRepository.save(new Category(null, "Salary", CategoryType.INCOME, requestedUser));
+        expenseCategory = categoryRepository.save(new Category(null, "Groceries", CategoryType.EXPENSE, requestedUser));
+        otherIncomeCategory = categoryRepository.save(new Category(null, "Salary", CategoryType.INCOME, otherUser));
+        otherExpenseCategory = categoryRepository.save(new Category(null, "Groceries", CategoryType.EXPENSE, otherUser));
         currentMonth = YearMonth.now();
     }
 
@@ -81,8 +85,8 @@ class ReportServiceIntegrationTest {
     void monthlySummaryIncludesOnlyRequestedUser() {
         saveTransaction(requestedUserAccount, incomeCategory, "1000.00", TransactionType.INCOME);
         saveTransaction(requestedUserAccount, expenseCategory, "125.00", TransactionType.EXPENSE);
-        saveTransaction(otherUserAccount, incomeCategory, "5000.00", TransactionType.INCOME);
-        saveTransaction(otherUserAccount, expenseCategory, "900.00", TransactionType.EXPENSE);
+        saveTransaction(otherUserAccount, otherIncomeCategory, "5000.00", TransactionType.INCOME);
+        saveTransaction(otherUserAccount, otherExpenseCategory, "900.00", TransactionType.EXPENSE);
 
         MonthlySummaryResponse summary = reportService.getMonthlySummary(
                 currentMonth.getYear(), currentMonth.getMonthValue(), requestedUser.getId());
@@ -100,9 +104,9 @@ class ReportServiceIntegrationTest {
     void budgetStatusIncludesOnlyRequestedUser() {
         String month = currentMonth.toString();
         budgetRepository.save(new Budget(null, expenseCategory, requestedUser, month, money("200.00")));
-        budgetRepository.save(new Budget(null, expenseCategory, otherUser, month, money("1000.00")));
+        budgetRepository.save(new Budget(null, otherExpenseCategory, otherUser, month, money("1000.00")));
         saveTransaction(requestedUserAccount, expenseCategory, "125.00", TransactionType.EXPENSE);
-        saveTransaction(otherUserAccount, expenseCategory, "900.00", TransactionType.EXPENSE);
+        saveTransaction(otherUserAccount, otherExpenseCategory, "900.00", TransactionType.EXPENSE);
 
         List<BudgetStatusResponse> statuses = reportService.getBudgetStatus(
                 currentMonth.getYear(), currentMonth.getMonthValue(), requestedUser.getId());

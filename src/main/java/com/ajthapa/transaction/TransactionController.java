@@ -45,12 +45,12 @@ public class TransactionController {
         return transactionService.getTransactionById(id, Long.valueOf(jwt.getSubject()));
     }
 
-    @Operation(summary = "Create a transaction")
+    @Operation(summary = "Create a transaction", description = "The account and category must belong to the authenticated user.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Transaction created"),
             @ApiResponse(responseCode = "400", description = "Request validation failed"),
             @ApiResponse(responseCode = "401", description = "Missing or invalid token"),
-            @ApiResponse(responseCode = "404", description = "Account or category not found")
+            @ApiResponse(responseCode = "404", description = "Account or category does not exist or belongs to another user")
     })
     @PostMapping
     public ResponseEntity<TransactionResponse> createTransaction(@Valid @RequestBody CreateTransactionRequest createTransactionRequest,
@@ -73,12 +73,12 @@ public class TransactionController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Update a transaction")
+    @Operation(summary = "Update a transaction", description = "The transaction, account, and category must belong to the authenticated user.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Transaction updated"),
             @ApiResponse(responseCode = "400", description = "Request validation failed"),
             @ApiResponse(responseCode = "401", description = "Missing or invalid token"),
-            @ApiResponse(responseCode = "404", description = "Transaction, account, or category not found")
+            @ApiResponse(responseCode = "404", description = "Transaction, account, or category does not exist or belongs to another user")
     })
     @PutMapping("{id}")
     public ResponseEntity<TransactionResponse> updateTransaction(@PathVariable Long id,

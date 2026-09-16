@@ -31,7 +31,7 @@ public class BudgetService {
     }
 
     public BudgetResponse createBudget(CreateBudgetRequest createBudgetRequest, Long userId) {
-        Category category = categoryRepository.findById(createBudgetRequest.categoryId())
+        Category category = categoryRepository.findByIdAndAppUserId(createBudgetRequest.categoryId(), userId)
                 .orElseThrow(() -> new IllegalStateException("Category " + createBudgetRequest.categoryId() + " not found"));
         AppUser appUser = appUserRepository.findById(userId)
                 .orElseThrow(() -> new IllegalStateException("User " + userId + " not found"));
@@ -58,7 +58,7 @@ public class BudgetService {
     }
 
     public BudgetResponse updateBudget(Long id, UpdateBudgetRequest updateBudgetRequest, Long userId) {
-        Category category = categoryRepository.findById(updateBudgetRequest.categoryId())
+        Category category = categoryRepository.findByIdAndAppUserId(updateBudgetRequest.categoryId(), userId)
                 .orElseThrow(() -> new IllegalStateException("Category " + updateBudgetRequest.categoryId() + " not found"));
         appUserRepository.findById(userId)
                 .orElseThrow(() -> new IllegalStateException("User " + userId + " not found"));

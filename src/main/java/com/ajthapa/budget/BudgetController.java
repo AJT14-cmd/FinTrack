@@ -46,12 +46,12 @@ public class BudgetController {
         return budgetService.getBudgetById(id, Long.valueOf(jwt.getSubject()));
     }
 
-    @Operation(summary = "Create a budget")
+    @Operation(summary = "Create a budget", description = "The category must belong to the authenticated user.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Budget created"),
             @ApiResponse(responseCode = "400", description = "Request validation failed"),
             @ApiResponse(responseCode = "401", description = "Missing or invalid token"),
-            @ApiResponse(responseCode = "404", description = "User or category not found")
+            @ApiResponse(responseCode = "404", description = "User not found, or category missing or owned by another user")
     })
     @PostMapping
     public ResponseEntity<BudgetResponse> createBudget(@Valid @RequestBody CreateBudgetRequest createBudgetRequest,
@@ -72,12 +72,12 @@ public class BudgetController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Update a budget")
+    @Operation(summary = "Update a budget", description = "The budget and category must belong to the authenticated user.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Budget updated"),
             @ApiResponse(responseCode = "400", description = "Request validation failed"),
             @ApiResponse(responseCode = "401", description = "Missing or invalid token"),
-            @ApiResponse(responseCode = "404", description = "Budget, user, or category not found")
+            @ApiResponse(responseCode = "404", description = "User not found, or budget/category missing or owned by another user")
     })
     @PutMapping("{id}")
     public ResponseEntity<BudgetResponse> updateBudget(@PathVariable Long id,

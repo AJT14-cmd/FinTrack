@@ -159,7 +159,7 @@ class TransactionServiceTest {
                 TransactionType.EXPENSE
         );
 
-        when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(category));
+        when(categoryRepository.findByIdAndAppUserId(CATEGORY_ID, USER_ID)).thenReturn(Optional.of(category));
         when(accountRepository.findByIdAndAppUserId(newAccountId, USER_ID)).thenReturn(Optional.of(newAccount));
         when(transactionRepository.findByIdAndAccountAppUserId(TRANSACTION_ID, USER_ID))
                 .thenReturn(Optional.of(transaction));
@@ -239,7 +239,7 @@ class TransactionServiceTest {
                 TransactionType.EXPENSE
         );
 
-        when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(category));
+        when(categoryRepository.findByIdAndAppUserId(CATEGORY_ID, USER_ID)).thenReturn(Optional.of(category));
         when(accountRepository.findByIdAndAppUserId(newAccountId, USER_ID)).thenReturn(Optional.of(newAccount));
         when(transactionRepository.findByIdAndAccountAppUserId(TRANSACTION_ID, USER_ID))
                 .thenReturn(Optional.of(transaction));
@@ -260,14 +260,14 @@ class TransactionServiceTest {
     }
 
     private void prepareCreate(Category category, Account account) {
-        when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(category));
+        when(categoryRepository.findByIdAndAppUserId(CATEGORY_ID, USER_ID)).thenReturn(Optional.of(category));
         when(accountRepository.findByIdAndAppUserId(ACCOUNT_ID, USER_ID)).thenReturn(Optional.of(account));
         when(transactionRepository.save(any(Transaction.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     private void prepareUpdate(Category category, Account account, Transaction transaction) {
-        when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(category));
+        when(categoryRepository.findByIdAndAppUserId(CATEGORY_ID, USER_ID)).thenReturn(Optional.of(category));
         when(accountRepository.findByIdAndAppUserId(ACCOUNT_ID, USER_ID)).thenReturn(Optional.of(account));
         when(transactionRepository.findByIdAndAccountAppUserId(TRANSACTION_ID, USER_ID))
                 .thenReturn(Optional.of(transaction));
@@ -275,7 +275,7 @@ class TransactionServiceTest {
     }
 
     private Category category(CategoryType type) {
-        return new Category(CATEGORY_ID, type.name(), type);
+        return new Category(CATEGORY_ID, type.name(), type, user(USER_ID));
     }
 
     private Account account(Long id, String balance) {
