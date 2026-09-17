@@ -14,6 +14,7 @@ This project was built to learn backend application development with Java and Sp
 - Create, read, update, and delete user-owned income and expense categories
 - Create, read, update, and delete transactions
 - Browse transactions with pagination and sorting by date, amount, or ID
+- Filter transactions by account, category, type, and inclusive date range
 - Automatically update account balances when transactions change
 - Create and manage monthly category budgets
 - Retrieve accounts, transactions, and budgets for the authenticated user
@@ -268,7 +269,29 @@ Invalid page sizes, negative pages, unsupported sort fields or directions, and
 malformed numeric parameters return `400`. The offset (`page * size`) cannot
 exceed `2147483647`. A missing or invalid token returns `401`.
 
-Filtering by account, category, transaction type, or date range is not implemented yet.
+Optional filters combine with AND and work with the pagination and sorting parameters:
+
+| Parameter | Allowed values |
+| --- | --- |
+| `accountId` | Positive account ID |
+| `categoryId` | Positive category ID |
+| `type` | `INCOME` or `EXPENSE` (case-sensitive) |
+| `startDate` | ISO date such as `2026-09-01`; includes this day and later |
+| `endDate` | ISO date such as `2026-09-30`; includes this day and earlier |
+
+```http
+GET http://localhost:8080/api/transactions?type=EXPENSE&startDate=2026-09-01&endDate=2026-09-30&accountId=1&categoryId=1&size=10&sortBy=amount&direction=desc
+Authorization: Bearer {{token}}
+```
+
+Omit any filter to leave it unrestricted. Either date can be used alone, and
+using the same start and end date selects one whole day. Dates refer to the
+stored transaction local date/time, with no timezone conversion. Unknown or
+other-user account/category IDs return an empty page. Results and totals always
+remain scoped to the authenticated user and all supplied filters.
+
+Malformed dates, unsupported transaction types, nonpositive IDs, and reversed
+date ranges return `400`.
 
 ## Running Locally
 
@@ -393,6 +416,10 @@ empty results, page-size limits, each supported sort field, deterministic tie
 ordering, invalid parameters, and authenticated-user isolation of both results
 and totals. These tests use fixed timestamps for repeatable ordering checks.
 
+Transaction filtering tests cover individual and combined filters, inclusive
+date boundaries, open date ranges, filtered pagination and sorting, invalid
+inputs, and unknown/other-user resource IDs.
+
 ## What I Learned
 
 Building FinTrack gave me practical experience with:
@@ -416,7 +443,6 @@ Building FinTrack gave me practical experience with:
 - Add PostgreSQL Testcontainers coverage for database migrations
 - Expand unit, repository, and controller test coverage
 - Complete ownership tests for authenticated account, transaction, budget, and report operations
-- Add transaction filtering by account, category, type, and custom date ranges
 - Add recurring transactions, savings goals, and spending trend reports
 - Build a frontend dashboard for accounts, budgets, transactions, and reports
 - Add CI checks and deploy the application

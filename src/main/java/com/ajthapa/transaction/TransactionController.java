@@ -12,10 +12,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import java.time.LocalDate;
 import java.util.Set;
 
 @RestController
@@ -29,9 +30,13 @@ public class TransactionController {
         this.transactionService = transactionService;
     }
 
-    @Operation(summary = "List the authenticated user's transactions")
+    @Operation(summary = "List the authenticated user's transactions", description =
+            "Optional accountId, categoryId, type, startDate and endDate filters combine with AND. "
+            + "Dates use YYYY-MM-DD and include both boundary days. Either date may be omitted. "
+            + "Unknown or other-user account/category IDs return an empty page. Sorting and pagination apply to filtered results.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Transactions returned"),
+            @ApiResponse(responseCode = "400", description = "Invalid pagination, sorting, filter, or date range"),
             @ApiResponse(responseCode = "401", description = "Missing or invalid token")
     })
     @GetMapping
@@ -39,7 +44,12 @@ public class TransactionController {
                                                      @RequestParam(defaultValue = "0") int page,
                                                      @RequestParam(defaultValue = "20") int size,
                                                      @RequestParam(defaultValue = "transactionDateTime") String sortBy,
-                                                     @RequestParam(defaultValue = "desc") String direction) {
+                                                     @RequestParam(defaultValue = "desc") String direction,
+                                                     @RequestParam(required = false) Long accountId,
+                                                     @RequestParam(required = false) Long categoryId,
+                                                     @RequestParam(required = false) TransactionType type,
+                                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         if (page < 0) {
             throw new IllegalArgumentException("Page cannot be negative");
         }
@@ -67,7 +77,7 @@ public class TransactionController {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<TransactionResponse> result = transactionService
-                .getAllTransactions(Long.valueOf(jwt.getSubject()), pageable);
+                .getAllTransactions(Long.valueOf(jwt.getSubject()), pageable, accountId, categoryId, type, startDate, endDate);
 
         return new TransactionPageResponse(
                 result.getContent(),

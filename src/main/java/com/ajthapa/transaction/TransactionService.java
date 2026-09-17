@@ -3,10 +3,11 @@ import com.ajthapa.account.Account;
 import com.ajthapa.account.AccountRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.time.LocalDate;
 import com.ajthapa.category.Category;
 import com.ajthapa.category.CategoryRepository;
 
@@ -25,7 +26,43 @@ public class TransactionService {
     }
 
     public Page<TransactionResponse> getAllTransactions(Long userId, Pageable pageable) {
-        return transactionRepository.findByAccountAppUserId(userId, pageable).map(this::mapResponse);
+        return getAllTransactions(userId, pageable, null, null, null, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TransactionResponse> getAllTransactions(Long userId, Pageable pageable,
+            Long accountId, Long categoryId, TransactionType type, LocalDate startDate, LocalDate endDate) {
+        if (accountId != null && accountId <= 0 || categoryId != null && categoryId <= 0) {
+            throw new IllegalArgumentException("Account and category IDs must be positive");
+        }
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date must be on or before end date");
+        }
+        if (endDate != null && endDate.equals(LocalDate.MAX)) {
+            throw new IllegalArgumentException("End date is out of range");
+        }
+
+        Specification<Transaction> filters = (root, query, cb) ->
+                cb.equal(root.get("account").get("appUser").get("id"), userId);
+        if (accountId != null) {
+            filters = filters.and((root, query, cb) -> cb.equal(root.get("account").get("id"), accountId));
+        }
+        if (categoryId != null) {
+            filters = filters.and((root, query, cb) -> cb.equal(root.get("category").get("id"), categoryId));
+        }
+        if (type != null) {
+            filters = filters.and((root, query, cb) -> cb.equal(root.get("type"), type));
+        }
+        if (startDate != null) {
+            filters = filters.and((root, query, cb) -> cb.greaterThanOrEqualTo(
+                    root.get("transactionDateTime"), startDate.atStartOfDay()));
+        }
+        if (endDate != null) {
+            // An exclusive next-day boundary includes every timestamp on the end date.
+            filters = filters.and((root, query, cb) -> cb.lessThan(
+                    root.get("transactionDateTime"), endDate.plusDays(1).atStartOfDay()));
+        }
+        return transactionRepository.findAll(filters, pageable).map(this::mapResponse);
     }
 
     public TransactionResponse getTransactionById(Long id, Long userId) {

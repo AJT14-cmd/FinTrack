@@ -1,6 +1,6 @@
 # FinTrack Project Plan
 
-Updated: September 15, 2026
+Updated: September 16, 2026
 
 ## Vision
 
@@ -92,7 +92,7 @@ migration against populated data.
 
 ## Milestone 2: Transaction Filtering, Sorting, And Pagination
 
-Status: Planned after category ownership.
+Status: Implemented; filtering, sorting, and pagination have integration coverage.
 
 Goal: Find transactions without downloading the entire history.
 
@@ -105,14 +105,19 @@ Learn query parameters, Spring Data pagination, and combining query conditions.
 5. Preserve user ownership restrictions in every query.
 6. Document parameters and the paginated response in OpenAPI.
 
-Example planned request:
+Example request:
 
 ```http
-GET /api/transactions?page=0&size=20&type=EXPENSE&sort=transactionDateTime,desc
+GET /api/transactions?page=0&size=20&type=EXPENSE&startDate=2026-09-01&endDate=2026-09-30&sortBy=transactionDateTime&direction=desc
 ```
 
 Completion: Filters and pagination work together, invalid inputs produce clear
 errors, and no filter combination exposes another user's transactions.
+
+The API also accepts optional accountId and categoryId filters. All filters
+combine with AND. Dates include both boundary days and may be supplied alone.
+Other-user or unknown account/category IDs return empty pages. Continuous
+integration is the next milestone after the full test suite passes.
 
 ## Milestone 3: Continuous Integration
 
